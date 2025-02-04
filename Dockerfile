@@ -13,7 +13,7 @@ RUN GOOS=linux GOARCH=amd64 go build -o bot .
 RUN chmod +x ./bot
 
 # Шаг 2: Минимальный образ для запуска (без Golang)
-FROM alpine:latest
+FROM ubuntu:latest
 
 # Устанавливаем необходимые зависимости
 RUN apk --no-cache add ca-certificates
