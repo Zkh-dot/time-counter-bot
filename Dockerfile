@@ -23,6 +23,7 @@ WORKDIR /root/
 
 # Копируем скомпилированное бинарное приложение из builder-контейнера
 COPY --from=builder /app/bot .
+COPY --from=builder /app/config.yaml .
 
 # Указываем команду для запуска бота
 CMD ["./bot"]
