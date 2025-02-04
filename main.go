@@ -65,11 +65,7 @@ func main() {
 	// Tell the user the bot is online
 	log.Println("Start listening for updates. Press enter to stop")
 
-	// Wait for a newline symbol, then cancel handling updates
-	// _, err = bufio.NewReader(os.Stdin).ReadBytes('\n')
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	select {}
 
 	cancel()
 }
