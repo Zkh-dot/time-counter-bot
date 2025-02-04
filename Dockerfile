@@ -10,6 +10,7 @@ COPY . .
 # Загружаем зависимости и собираем приложение
 RUN go mod tidy
 RUN go build -o bot .
+RUN chmod +x ./bot
 
 # Шаг 2: Минимальный образ для запуска (без Golang)
 FROM alpine:latest
