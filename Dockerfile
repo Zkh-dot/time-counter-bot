@@ -16,7 +16,9 @@ RUN chmod +x ./bot
 FROM ubuntu:latest
 
 # Устанавливаем необходимые зависимости
-RUN apk --no-cache add ca-certificates
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 # Устанавливаем рабочую директорию внутри контейнера
 WORKDIR /root/
