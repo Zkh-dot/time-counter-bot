@@ -31,6 +31,7 @@ func (c *conf) getConf() *conf {
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	db.InitDB()
 
 	var err error
