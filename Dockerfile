@@ -9,7 +9,7 @@ COPY . .
 
 # Загружаем зависимости и собираем приложение
 RUN go mod tidy
-RUN go build -o bot .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bot .
 RUN chmod +x ./bot
 
 # Шаг 2: Минимальный образ для запуска (без Golang)
