@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"log"
 	"os"
@@ -66,10 +65,10 @@ func main() {
 	log.Println("Start listening for updates. Press enter to stop")
 
 	// Wait for a newline symbol, then cancel handling updates
-	_, err = bufio.NewReader(os.Stdin).ReadBytes('\n')
-	if err != nil {
-		log.Fatal(err)
-	}
+	// _, err = bufio.NewReader(os.Stdin).ReadBytes('\n')
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	cancel()
 }
