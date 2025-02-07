@@ -15,7 +15,7 @@ services:
       - "5432:5432"
 
   telegram-bot:
-    image: my-telegram-bot-pg:latest
+    image: atsinin/time-keeper-tg-bot:latest
     container_name: telegram-bot-pg
     restart: always
     environment:
