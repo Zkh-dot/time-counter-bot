@@ -14,5 +14,15 @@ services:
     ports:
       - "5432:5432"
 
+  telegram-bot:
+    image: my-dockerhub-username/my-bot:latest
+    container_name: telegram-bot
+    restart: always
+    environment:
+      # - TELEGRAM_BOT_TOKEN=your-bot-token
+      - DATABASE_URL=postgres://bot:secret@postgres:5432/botdb?sslmode=disable
+    depends_on:
+      - postgres
+
 volumes:
   postgres_data:
