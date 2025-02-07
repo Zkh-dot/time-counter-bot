@@ -91,6 +91,10 @@ func handleCommand(message *tgbotapi.Message) {
 
 	case "/register_new_activity":
 		routes.RegisterNewActivityCommand(message)
+
+	case "/get_day_statistics":
+		routes.GetDayStatisticsCommand(message)
+
 	}
 }
 
