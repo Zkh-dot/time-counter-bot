@@ -15,7 +15,7 @@ services:
       - "5432:5432"
 
   telegram-bot:
-    image: my-dockerhub-username/my-bot:latest
+    image: my-telegram-bot-pg:latest
     container_name: telegram-bot
     restart: always
     environment:
