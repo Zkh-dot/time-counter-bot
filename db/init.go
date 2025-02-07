@@ -22,7 +22,7 @@ func InitDB() {
 	database := getPostgreSQLDatabase()
 
 	createTableSQL := `CREATE TABLE IF NOT EXISTS activities (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		id SERIAL PRIMARY KEY,
 		user_id INTEGER NOT NULL,
 		name TEXT NOT NULL,
 		parent_activity_id INTEGER NOT NULL,
