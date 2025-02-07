@@ -90,7 +90,7 @@ func ParseAndAddActivityDeprecated(userID common.UserID, activity string) {
 		VALUES ($1, $2, $3, $4)
 	`
 	selectActivitySQL := `SELECT id FROM activities
-		WHERE user_id == $1 AND name == $2 AND parent_activity_id == $3 AND is_leaf == $4
+		WHERE user_id  $1 AND name = $2 AND parent_activity_id = $3 AND is_leaf = $4
 	`
 
 	route := strings.Split(activity, " / ")
@@ -204,7 +204,7 @@ func GetSimpleActivities(userID common.UserID) []Activity {
 	database := getPostgreSQLDatabase()
 
 	selectActivitySQL := `SELECT id, user_id, name, parent_activity_id, is_leaf FROM activities
-		WHERE user_id == $1
+		WHERE user_id = $1
 	`
 
 	rows, err := database.Query(selectActivitySQL, userID)

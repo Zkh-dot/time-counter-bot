@@ -51,7 +51,7 @@ func GetUserByID(userID common.UserID) (*User, error) {
 
 	selectUserSQL := `SELECT id, chat_id, timer_enabled, timer_minutes, 
 			schedule_morning_start_hour, schedule_evening_finish_hour, last_notify FROM users
-		WHERE id == $1
+		WHERE id = $1
 	`
 
 	rows, err := database.Query(selectUserSQL, userID)
