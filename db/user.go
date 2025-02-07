@@ -24,7 +24,7 @@ func AddUser(user User) {
 	insertUserSQL := `INSERT INTO users 
 			(id, chat_id, timer_enabled, timer_minutes, 
 			schedule_morning_start_hour, schedule_evening_finish_hour, last_notify) 
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 
 	_, err := database.Exec(
@@ -51,7 +51,7 @@ func GetUserByID(userID common.UserID) (*User, error) {
 
 	selectUserSQL := `SELECT id, chat_id, timer_enabled, timer_minutes, 
 			schedule_morning_start_hour, schedule_evening_finish_hour, last_notify FROM users
-		WHERE id == ?
+		WHERE id == $1
 	`
 
 	rows, err := database.Query(selectUserSQL, userID)
@@ -99,10 +99,10 @@ func UpdateUser(user User) {
 	database := getPostgreSQLDatabase()
 
 	updateUserSQL := `UPDATE users
-		SET timer_enabled = ?, timer_minutes = ?, 
-		  schedule_morning_start_hour = ?, schedule_evening_finish_hour = ?,
-		  last_notify = ?
-		WHERE id = ?
+		SET timer_enabled = $1, timer_minutes = $2, 
+		  schedule_morning_start_hour = $3, schedule_evening_finish_hour = $4,
+		  last_notify = $5
+		WHERE id = $6
 	`
 
 	_, err := database.Exec(
