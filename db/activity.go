@@ -1,7 +1,6 @@
 package db
 
 import (
-	"database/sql"
 	"errors"
 	"log"
 	"slices"
@@ -11,15 +10,17 @@ import (
 )
 
 func addActivity(activity Activity) int64 {
-	mutex.Lock()
-	defer mutex.Unlock()
+	// mutex.Lock()
+	// defer mutex.Unlock()
 
-	database, err := sql.Open("sqlite3", "database.db")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// database, err := sql.Open("sqlite3", "database.db")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	defer database.Close()
+	// defer database.Close()
+
+	database := getPostgreSQLDatabase()
 
 	insertActivitySQL := `INSERT INTO activities (user_id, name, parent_activity_id, is_leaf) 
 		VALUES (?, ?, ?, ?)
@@ -73,15 +74,17 @@ func ParseAndAddActivity(userID common.UserID, activity string) {
 }
 
 func ParseAndAddActivityDeprecated(userID common.UserID, activity string) {
-	mutex.Lock()
-	defer mutex.Unlock()
+	// mutex.Lock()
+	// defer mutex.Unlock()
 
-	database, err := sql.Open("sqlite3", "database.db")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// database, err := sql.Open("sqlite3", "database.db")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	defer database.Close()
+	// defer database.Close()
+
+	database := getPostgreSQLDatabase()
 
 	insertActivitySQL := `INSERT INTO activities (user_id, name, parent_activity_id, is_leaf) 
 		VALUES (?, ?, ?, ?)
@@ -188,15 +191,17 @@ func GetFullActivityNameByID(activityID int64, userID common.UserID) (string, er
 }
 
 func GetSimpleActivities(userID common.UserID) []Activity {
-	mutex.Lock()
-	defer mutex.Unlock()
+	// mutex.Lock()
+	// defer mutex.Unlock()
 
-	database, err := sql.Open("sqlite3", "database.db")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// database, err := sql.Open("sqlite3", "database.db")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	defer database.Close()
+	// defer database.Close()
+
+	database := getPostgreSQLDatabase()
 
 	selectActivitySQL := `SELECT id, user_id, name, parent_activity_id, is_leaf FROM activities
 		WHERE user_id == ?

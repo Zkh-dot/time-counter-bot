@@ -2,20 +2,24 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"os"
 
-	_ "github.com/mattn/go-sqlite3"
+	// _ "github.com/mattn/go-sqlite3"
+	_ "github.com/jackc/pgx/v5/stdlib" // PostgreSQL драйвер
 )
 
 func InitDB() {
-	mutex.Lock()
-	defer mutex.Unlock()
+	// mutex.Lock()
+	// defer mutex.Unlock()
 
-	database, err := sql.Open("sqlite3", "database.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer database.Close()
+	// database, err := sql.Open("sqlite3", "database.db")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// defer database.Close()
+	database := getPostgreSQLDatabase()
 
 	createTableSQL := `CREATE TABLE IF NOT EXISTS activities (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,7 +28,7 @@ func InitDB() {
 		parent_activity_id INTEGER NOT NULL,
 		is_leaf BOOLEAN NOT NULL
 	);`
-	_, err = database.Exec(createTableSQL)
+	_, err := database.Exec(createTableSQL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,4 +60,28 @@ func InitDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func getPostgreSQLDatabase() *sql.DB {
+	if db == nil || db.Ping() != nil {
+		// Берем строку подключения из переменной окружения (docker-compose)
+		dsn := os.Getenv("DATABASE_URL")
+		if dsn == "" {
+			dsn = "postgres://bot:secret@localhost:5432/botdb?sslmode=disable"
+		}
+
+		// Подключаемся к PostgreSQL
+		var err error
+		db, err = sql.Open("pgx", dsn)
+		if err != nil {
+			log.Fatal("PostgreSQL connection error:", err)
+		}
+
+		// Проверяем соединение
+		if err := db.Ping(); err != nil {
+			log.Fatal("БД недоступна:", err)
+		}
+		fmt.Println("✅ Successful connected to PostgreSQL")
+	}
+	return db
 }

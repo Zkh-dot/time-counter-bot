@@ -2,13 +2,15 @@ package db
 
 import (
 	"database/sql"
-	"sync"
 	"time"
 
 	"TimeCounterBot/common"
 )
 
-var mutex sync.Mutex
+var (
+	db *sql.DB
+	// mutex sync.Mutex
+)
 
 type Activity struct {
 	ID               int64

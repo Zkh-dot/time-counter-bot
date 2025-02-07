@@ -1,7 +1,6 @@
 package db
 
 import (
-	"database/sql"
 	"errors"
 	"log"
 	"strconv"
@@ -10,15 +9,17 @@ import (
 )
 
 func AddUser(user User) {
-	mutex.Lock()
-	defer mutex.Unlock()
+	// mutex.Lock()
+	// defer mutex.Unlock()
 
-	database, err := sql.Open("sqlite3", "database.db")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// database, err := sql.Open("sqlite3", "database.db")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	defer database.Close()
+	// defer database.Close()
+
+	database := getPostgreSQLDatabase()
 
 	insertUserSQL := `INSERT INTO users 
 			(id, chat_id, timer_enabled, timer_minutes, 
@@ -26,7 +27,7 @@ func AddUser(user User) {
 		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`
 
-	_, err = database.Exec(
+	_, err := database.Exec(
 		insertUserSQL, user.ID, user.ChatID, user.TimerEnabled, user.TimerMinutes,
 		user.ScheduleMorningStartHour, user.ScheduleEveningFinishHour, user.LastNotify,
 	)
@@ -36,15 +37,17 @@ func AddUser(user User) {
 }
 
 func GetUserByID(userID common.UserID) (*User, error) {
-	mutex.Lock()
-	defer mutex.Unlock()
+	// mutex.Lock()
+	// defer mutex.Unlock()
 
-	database, err := sql.Open("sqlite3", "database.db")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// database, err := sql.Open("sqlite3", "database.db")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	defer database.Close()
+	// defer database.Close()
+
+	database := getPostgreSQLDatabase()
 
 	selectUserSQL := `SELECT id, chat_id, timer_enabled, timer_minutes, 
 			schedule_morning_start_hour, schedule_evening_finish_hour, last_notify FROM users
@@ -83,15 +86,17 @@ func GetUserByID(userID common.UserID) (*User, error) {
 }
 
 func UpdateUser(user User) {
-	mutex.Lock()
-	defer mutex.Unlock()
+	// mutex.Lock()
+	// defer mutex.Unlock()
 
-	database, err := sql.Open("sqlite3", "database.db")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// database, err := sql.Open("sqlite3", "database.db")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	defer database.Close()
+	// defer database.Close()
+
+	database := getPostgreSQLDatabase()
 
 	updateUserSQL := `UPDATE users
 		SET timer_enabled = ?, timer_minutes = ?, 
@@ -100,7 +105,7 @@ func UpdateUser(user User) {
 		WHERE id = ?
 	`
 
-	_, err = database.Exec(
+	_, err := database.Exec(
 		updateUserSQL, user.TimerEnabled, user.TimerMinutes, user.ScheduleMorningStartHour,
 		user.ScheduleEveningFinishHour, user.LastNotify, user.ID,
 	)
@@ -110,15 +115,17 @@ func UpdateUser(user User) {
 }
 
 func GetUsers() []User {
-	mutex.Lock()
-	defer mutex.Unlock()
+	// mutex.Lock()
+	// defer mutex.Unlock()
 
-	database, err := sql.Open("sqlite3", "database.db")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// database, err := sql.Open("sqlite3", "database.db")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	defer database.Close()
+	// defer database.Close()
+
+	database := getPostgreSQLDatabase()
 
 	selectUserSQL := `SELECT id, chat_id, timer_enabled, timer_minutes, 
 		schedule_morning_start_hour, schedule_evening_finish_hour, last_notify 
