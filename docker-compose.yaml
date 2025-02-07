@@ -16,7 +16,7 @@ services:
 
   telegram-bot:
     image: my-telegram-bot-pg:latest
-    container_name: telegram-bot
+    container_name: telegram-bot-pg
     restart: always
     environment:
       # - TELEGRAM_BOT_TOKEN=your-bot-token
