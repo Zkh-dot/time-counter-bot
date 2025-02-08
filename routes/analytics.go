@@ -22,8 +22,6 @@ func generateAdvancedChart(filename string) error {
 		{X: 1, Y: 10},
 		{X: 2, Y: 20},
 		{X: 3, Y: 15},
-		{X: 4, Y: 30},
-		{X: 5, Y: 25},
 	}
 
 	line, err := plotter.NewLine(pts)
