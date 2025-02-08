@@ -11,33 +11,13 @@ import (
 	"TimeCounterBot/tg/router"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"gopkg.in/yaml.v3"
 )
-
-type conf struct {
-	TgToken string `yaml:"telegram_token"`
-}
-
-func (c *conf) getConf() *conf {
-	yamlFile, err := os.ReadFile("config.yaml")
-	if err != nil {
-		log.Printf("yamlFile.Get err   #%v ", err)
-	}
-	err = yaml.Unmarshal(yamlFile, c)
-	if err != nil {
-		log.Fatalf("Unmarshal: %v", err)
-	}
-	return c
-}
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	db.InitDB()
 
 	var err error
-
-	// var c conf
-	// c.getConf()
 
 	token := os.Getenv("TELEGRAM_TOKEN")
 	if token == "" {

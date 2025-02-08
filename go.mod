@@ -5,11 +5,6 @@ go 1.23.5
 require github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 
 require (
-	github.com/mattn/go-sqlite3 v1.14.24
-	gopkg.in/yaml.v3 v3.0.1
-)
-
-require (
 	git.sr.ht/~sbinet/gg v0.6.0 // indirect
 	github.com/ajstarks/svgo v0.0.0-20211024235047-1546f124cd8b // indirect
 	github.com/campoy/embedmd v1.0.0 // indirect

@@ -10,33 +10,22 @@ import (
 )
 
 func addActivity(activity Activity) int64 {
-	// mutex.Lock()
-	// defer mutex.Unlock()
-
-	// database, err := sql.Open("sqlite3", "database.db")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// defer database.Close()
-
 	database := getPostgreSQLDatabase()
 
 	insertActivitySQL := `INSERT INTO activities (user_id, name, parent_activity_id, is_leaf) 
-		VALUES ($1, $2, $3, $4)
+		VALUES ($1, $2, $3, $4) RETURNING id
 	`
-	row, err := database.Exec(
+
+	var currentActivityID int64
+	err := database.QueryRow(
 		insertActivitySQL, activity.UserID, activity.Name,
 		activity.ParentActivityID, activity.IsLeaf,
-	)
+	).Scan(&currentActivityID)
+
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	currentActivityID, err := row.LastInsertId()
-	if err != nil {
-		log.Fatal(err)
-	}
 	return currentActivityID
 }
 
@@ -69,71 +58,6 @@ func ParseAndAddActivity(userID common.UserID, activity string) {
 			)
 		} else {
 			parentActivityID = existingActivities[idx].ID
-		}
-	}
-}
-
-func ParseAndAddActivityDeprecated(userID common.UserID, activity string) {
-	// mutex.Lock()
-	// defer mutex.Unlock()
-
-	// database, err := sql.Open("sqlite3", "database.db")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// defer database.Close()
-
-	database := getPostgreSQLDatabase()
-
-	insertActivitySQL := `INSERT INTO activities (user_id, name, parent_activity_id, is_leaf) 
-		VALUES ($1, $2, $3, $4)
-	`
-	selectActivitySQL := `SELECT id FROM activities
-		WHERE user_id  $1 AND name = $2 AND parent_activity_id = $3 AND is_leaf = $4
-	`
-
-	route := strings.Split(activity, " / ")
-
-	var parentActivityID int64 = -1
-
-	for i, part := range route {
-		isLeaf := false
-		if i == len(route)-1 {
-			isLeaf = true
-		}
-
-		rows, err := database.Query(selectActivitySQL, userID, part, parentActivityID, isLeaf)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if rows.Err() != nil {
-			log.Fatal(rows.Err())
-		}
-
-		defer rows.Close()
-
-		found := false
-
-		for rows.Next() {
-			err = rows.Scan(&parentActivityID)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			found = true
-		}
-
-		if !found {
-			row, err := database.Exec(insertActivitySQL, userID, part, parentActivityID, isLeaf)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			parentActivityID, err = row.LastInsertId()
-			if err != nil {
-				log.Fatal(err)
-			}
 		}
 	}
 }
@@ -191,16 +115,6 @@ func GetFullActivityNameByID(activityID int64, userID common.UserID) (string, er
 }
 
 func GetSimpleActivities(userID common.UserID) []Activity {
-	// mutex.Lock()
-	// defer mutex.Unlock()
-
-	// database, err := sql.Open("sqlite3", "database.db")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// defer database.Close()
-
 	database := getPostgreSQLDatabase()
 
 	selectActivitySQL := `SELECT id, user_id, name, parent_activity_id, is_leaf FROM activities

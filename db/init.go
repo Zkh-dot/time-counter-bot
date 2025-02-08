@@ -6,19 +6,10 @@ import (
 	"log"
 	"os"
 
-	// _ "github.com/mattn/go-sqlite3"
 	_ "github.com/jackc/pgx/v5/stdlib" // PostgreSQL драйвер
 )
 
 func InitDB() {
-	// mutex.Lock()
-	// defer mutex.Unlock()
-
-	// database, err := sql.Open("sqlite3", "database.db")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer database.Close()
 	database := getPostgreSQLDatabase()
 
 	createTableSQL := `CREATE TABLE IF NOT EXISTS activities (

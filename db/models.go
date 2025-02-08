@@ -9,7 +9,6 @@ import (
 
 var (
 	db *sql.DB
-	// mutex sync.Mutex
 )
 
 type Activity struct {

@@ -5,16 +5,6 @@ import (
 )
 
 func AddActivityLog(activityLog ActivityLog) {
-	// mutex.Lock()
-	// defer mutex.Unlock()
-
-	// database, err := sql.Open("sqlite3", "database.db")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// defer database.Close()
-
 	database := getPostgreSQLDatabase()
 
 	insertActivitySQL := `INSERT INTO activity_log (message_id, user_id, activity_id, timestamp, interval_minutes) 

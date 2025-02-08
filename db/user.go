@@ -9,16 +9,6 @@ import (
 )
 
 func AddUser(user User) {
-	// mutex.Lock()
-	// defer mutex.Unlock()
-
-	// database, err := sql.Open("sqlite3", "database.db")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// defer database.Close()
-
 	database := getPostgreSQLDatabase()
 
 	insertUserSQL := `INSERT INTO users 
@@ -37,16 +27,6 @@ func AddUser(user User) {
 }
 
 func GetUserByID(userID common.UserID) (*User, error) {
-	// mutex.Lock()
-	// defer mutex.Unlock()
-
-	// database, err := sql.Open("sqlite3", "database.db")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// defer database.Close()
-
 	database := getPostgreSQLDatabase()
 
 	selectUserSQL := `SELECT id, chat_id, timer_enabled, timer_minutes, 
@@ -86,16 +66,6 @@ func GetUserByID(userID common.UserID) (*User, error) {
 }
 
 func UpdateUser(user User) {
-	// mutex.Lock()
-	// defer mutex.Unlock()
-
-	// database, err := sql.Open("sqlite3", "database.db")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// defer database.Close()
-
 	database := getPostgreSQLDatabase()
 
 	updateUserSQL := `UPDATE users
@@ -115,16 +85,6 @@ func UpdateUser(user User) {
 }
 
 func GetUsers() []User {
-	// mutex.Lock()
-	// defer mutex.Unlock()
-
-	// database, err := sql.Open("sqlite3", "database.db")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// defer database.Close()
-
 	database := getPostgreSQLDatabase()
 
 	selectUserSQL := `SELECT id, chat_id, timer_enabled, timer_minutes, 
