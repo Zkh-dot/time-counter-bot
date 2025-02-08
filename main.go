@@ -36,10 +36,15 @@ func main() {
 
 	var err error
 
-	var c conf
-	c.getConf()
+	// var c conf
+	// c.getConf()
 
-	bot.Bot, err = tgbotapi.NewBotAPI(c.TgToken)
+	token := os.Getenv("TELEGRAM_TOKEN")
+	if token == "" {
+		log.Fatal("Telegram token was not found")
+	}
+
+	bot.Bot, err = tgbotapi.NewBotAPI(token)
 	if err != nil {
 		// Abort if something is wrong
 		log.Panic(err)
