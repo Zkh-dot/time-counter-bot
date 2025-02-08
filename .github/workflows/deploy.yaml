@@ -34,4 +34,4 @@ jobs:
 
       - name: Deploy to k3s
         run: |
-          ssh -o StrictHostKeyChecking=no user@your-k3s-server "kubectl rollout restart deployment telegram-bot"
+          ssh -o StrictHostKeyChecking=no root@145.223.81.12 "kubectl rollout restart deployment telegram-bot"
