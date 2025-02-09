@@ -4,38 +4,39 @@ import (
 	tg "TimeCounterBot/tg/bot"
 	"encoding/json"
 	"log"
+	"os"
 	"os/exec"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-// Node представляет узел дерева активностей
-type Node struct {
+// ActivityNode — структура узла активности
+type ActivityNode struct {
 	ID       int      `json:"id"`
 	Name     string   `json:"name"`
-	ParentID *int     `json:"parent_id,omitempty"`
-	Duration *float64 `json:"duration,omitempty"`
+	ParentID *int     `json:"parent_id"`
+	Duration *float64 `json:"duration"`
 }
 
-// ChartData содержит список узлов для сериализации
-type ChartData struct {
-	Nodes []Node `json:"nodes"`
+// ActivityData — структура для передачи в скрипт
+type ActivityData struct {
+	Nodes []ActivityNode `json:"nodes"`
 }
 
 // GetDayStatisticsCommand вызывается, когда пользователь запрашивает статистику
 func GetDayStatisticsCommand(message *tgbotapi.Message) {
-	// Дерево активностей
-	data := ChartData{
-		Nodes: []Node{
+	// Пример данных для диаграммы
+	data := ActivityData{
+		Nodes: []ActivityNode{
 			{ID: 1, Name: "Work", ParentID: nil, Duration: nil},
-			{ID: 2, Name: "Sleep", ParentID: nil, Duration: floatPtr(6)},
+			{ID: 2, Name: "Sleep", ParentID: nil, Duration: FloatPtr(6)},
 			{ID: 3, Name: "Leisure", ParentID: nil, Duration: nil},
-			{ID: 4, Name: "Exercise", ParentID: nil, Duration: floatPtr(2)},
-			{ID: 5, Name: "Breakfast", ParentID: intPtr(1), Duration: floatPtr(2)},
-			{ID: 6, Name: "Programming", ParentID: intPtr(1), Duration: nil},
-			{ID: 7, Name: "Golang", ParentID: intPtr(6), Duration: floatPtr(4)},
-			{ID: 8, Name: "Python", ParentID: intPtr(6), Duration: floatPtr(2)},
-			{ID: 9, Name: "Gaming", ParentID: intPtr(3), Duration: floatPtr(5)},
+			{ID: 4, Name: "Exercise", ParentID: nil, Duration: FloatPtr(2)},
+			{ID: 5, Name: "Breakfast", ParentID: IntPtr(1), Duration: FloatPtr(2)},
+			{ID: 6, Name: "Programming", ParentID: IntPtr(1), Duration: nil},
+			{ID: 7, Name: "Golang", ParentID: IntPtr(6), Duration: FloatPtr(4)},
+			{ID: 8, Name: "Python", ParentID: IntPtr(6), Duration: FloatPtr(2)},
+			{ID: 9, Name: "Gaming", ParentID: IntPtr(3), Duration: FloatPtr(5)},
 		},
 	}
 
@@ -45,30 +46,46 @@ func GetDayStatisticsCommand(message *tgbotapi.Message) {
 		log.Fatalf("Ошибка кодирования JSON: %v", err)
 	}
 
-	// Путь к Python-скрипту
+	// Путь к Python-скрипту и файлу вывода
 	scriptPath := "python_scripts/generate_sunburst_chart.py"
 	outputFile := "pie_chart.png"
 
-	// Запускаем Python-скрипт
+	// Логирование перед запуском
+	log.Printf("📌 Запускаем Python-скрипт: %s", scriptPath)
+	log.Printf("📌 Данные для передачи: %s", string(jsonData))
+	log.Printf("📌 Файл для вывода: %s", outputFile)
+
+	// Создаём команду для запуска Python-скрипта
 	cmd := exec.Command("python3", scriptPath, string(jsonData), outputFile)
+
+	// Перенаправляем stderr, чтобы увидеть ошибки при выполнении
+	cmd.Stderr = os.Stderr
+
+	// Запускаем команду и проверяем ошибки
 	err = cmd.Run()
 	if err != nil {
-		log.Fatalf("Ошибка выполнения скрипта: %v", err)
+		log.Fatalf("❌ Ошибка выполнения скрипта: %v", err)
+	}
+
+	// Проверяем, создался ли файл
+	if _, err := os.Stat(outputFile); os.IsNotExist(err) {
+		log.Fatalf("❌ Файл с графиком не найден: %s", outputFile)
 	}
 
 	// Отправляем картинку в Telegram
 	msgconf := tgbotapi.NewPhoto(int64(message.Chat.ID), tgbotapi.FilePath(outputFile))
 	_, err = tg.Bot.Send(msgconf)
 	if err != nil {
-		log.Fatalf("Ошибка отправки изображения: %v", err)
+		log.Fatalf("❌ Ошибка отправки изображения: %v", err)
 	}
 }
 
-// Вспомогательные функции для указателей
-func intPtr(i int) *int {
-	return &i
+// FloatPtr — вспомогательная функция для создания указателя на float64
+func FloatPtr(value float64) *float64 {
+	return &value
 }
 
-func floatPtr(f float64) *float64 {
-	return &f
+// IntPtr — вспомогательная функция для создания указателя на int
+func IntPtr(value int) *int {
+	return &value
 }
