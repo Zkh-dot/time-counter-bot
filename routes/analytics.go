@@ -52,14 +52,16 @@ func drawPieSlice(dc draw.Canvas, center vg.Point, radius vg.Length, startAngle,
 	dc.Fill(path)
 }
 
-// Function to add a legend (работает!)
+// Function to add a legend
 func drawLegend(dc draw.Canvas, legendX, legendY vg.Length) {
 	boxSize := vg.Points(14) // Размер квадратика цвета
 	textOffset := vg.Points(5)
 
-	// Указываем стиль текста
+	// Используем стандартный шрифт
+	fnt := plot.DefaultFont
+
 	txtStyle := draw.TextStyle{
-		Font:     font.Font{Size: vg.Points(14)}, // Размер шрифта
+		Font:     font.Font{Typeface: fnt.Typeface, Variant: fnt.Variant, Size: vg.Points(14)},
 		Color:    color.Black,
 		XAlign:   draw.XLeft,
 		YAlign:   draw.YCenter,
