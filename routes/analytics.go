@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"image/color"
 	"image/png"
+	"io/ioutil"
 	"log"
 	"math"
 	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"golang.org/x/image/font/opentype"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/font"
 	"gonum.org/v1/plot/vg"
@@ -35,6 +37,26 @@ var colors = []color.Color{
 	color.RGBA{153, 102, 255, 255}, // Purple
 }
 
+// Загружаем TTF-шрифт
+func loadFont() font.Font {
+	fontBytes, err := ioutil.ReadFile("fonts/LiberationSans-Regular.ttf")
+	if err != nil {
+		log.Fatalf("Ошибка загрузки шрифта: %v", err)
+	}
+
+	_, err = opentype.Parse(fontBytes)
+	if err != nil {
+		log.Fatalf("Ошибка парсинга шрифта: %v", err)
+	}
+
+	// Используем шрифт "Liberation Sans"
+	return font.Font{
+		Typeface: "LiberationSans",
+		Variant:  "Regular",
+		Size:     vg.Points(14),
+	}
+}
+
 // Function to draw a pie slice
 func drawPieSlice(dc draw.Canvas, center vg.Point, radius vg.Length, startAngle, endAngle float64, col color.Color) {
 	path := vg.Path{}
@@ -57,11 +79,11 @@ func drawLegend(dc draw.Canvas, legendX, legendY vg.Length) {
 	boxSize := vg.Points(14) // Размер квадратика цвета
 	textOffset := vg.Points(5)
 
-	// Используем стандартный шрифт
-	fnt := plot.DefaultFont
+	// Используем загруженный шрифт
+	fnt := loadFont()
 
 	txtStyle := draw.TextStyle{
-		Font:     font.Font{Typeface: fnt.Typeface, Variant: fnt.Variant, Size: vg.Points(14)},
+		Font:     fnt,
 		Color:    color.Black,
 		XAlign:   draw.XLeft,
 		YAlign:   draw.YCenter,
@@ -69,7 +91,7 @@ func drawLegend(dc draw.Canvas, legendX, legendY vg.Length) {
 	}
 
 	i := 0
-	for label, _ := range data {
+	for label := range data {
 		yPos := legendY - vg.Length(i)*boxSize*2
 
 		// Рисуем квадратик с цветом
