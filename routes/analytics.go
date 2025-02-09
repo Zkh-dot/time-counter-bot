@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"image/color"
 	"image/png"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"golang.org/x/image/font/opentype"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/font"
 	"gonum.org/v1/plot/vg"
@@ -37,24 +35,8 @@ var colors = []color.Color{
 	color.RGBA{153, 102, 255, 255}, // Purple
 }
 
-// Загружаем TTF-шрифт
 func loadFont() font.Font {
-	fontBytes, err := ioutil.ReadFile("fonts/LiberationSans-Regular.ttf")
-	if err != nil {
-		log.Fatalf("Ошибка загрузки шрифта: %v", err)
-	}
-
-	_, err = opentype.Parse(fontBytes)
-	if err != nil {
-		log.Fatalf("Ошибка парсинга шрифта: %v", err)
-	}
-
-	// Используем шрифт "Liberation Sans"
-	return font.Font{
-		Typeface: "LiberationSans",
-		Variant:  "Regular",
-		Size:     vg.Points(14),
-	}
+	return plot.DefaultFont
 }
 
 // Function to draw a pie slice
