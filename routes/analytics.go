@@ -11,6 +11,7 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/font"
 	"gonum.org/v1/plot/vg"
 	"gonum.org/v1/plot/vg/draw"
 	"gonum.org/v1/plot/vg/vgimg"
@@ -37,7 +38,7 @@ var colors = []color.Color{
 // Function to draw a pie slice
 func drawPieSlice(dc draw.Canvas, center vg.Point, radius vg.Length, startAngle, endAngle float64, col color.Color) {
 	path := vg.Path{}
-	path.Move(vg.Point{center.X, center.Y})
+	path.Move(center)
 
 	// Создаем точки по кругу
 	for angle := startAngle; angle <= endAngle; angle += 0.01 {
@@ -49,6 +50,43 @@ func drawPieSlice(dc draw.Canvas, center vg.Point, radius vg.Length, startAngle,
 	path.Close()
 	dc.SetColor(col)
 	dc.Fill(path)
+}
+
+// Function to add a legend (работает!)
+func drawLegend(dc draw.Canvas, legendX, legendY vg.Length) {
+	boxSize := vg.Points(14) // Размер квадратика цвета
+	textOffset := vg.Points(5)
+
+	// Указываем стиль текста
+	txtStyle := draw.TextStyle{
+		Font:     font.Font{Size: vg.Points(14)}, // Размер шрифта
+		Color:    color.Black,
+		XAlign:   draw.XLeft,
+		YAlign:   draw.YCenter,
+		Rotation: 0,
+	}
+
+	i := 0
+	for label, _ := range data {
+		yPos := legendY - vg.Length(i)*boxSize*2
+
+		// Рисуем квадратик с цветом
+		rect := vg.Path{}
+		rect.Move(vg.Point{X: legendX, Y: yPos})
+		rect.Line(vg.Point{X: legendX + boxSize, Y: yPos})
+		rect.Line(vg.Point{X: legendX + boxSize, Y: yPos + boxSize})
+		rect.Line(vg.Point{X: legendX, Y: yPos + boxSize})
+		rect.Close()
+
+		dc.SetColor(colors[i%len(colors)])
+		dc.Fill(rect)
+
+		// Добавляем текст рядом с квадратиком
+		dc.SetColor(color.Black)
+		dc.FillText(txtStyle, vg.Point{X: legendX + boxSize + textOffset, Y: yPos + boxSize/2}, label)
+
+		i++
+	}
 }
 
 func generateAdvancedChart(filename string) {
@@ -64,12 +102,14 @@ func generateAdvancedChart(filename string) {
 
 	// Начальный угол
 	startAngle := 0.0
-	center := vg.Point{X: 4 * vg.Inch, Y: 4 * vg.Inch}
+	center := vg.Point{X: 3 * vg.Inch, Y: 4 * vg.Inch}
 	radius := 3 * vg.Inch
 
 	// Создаем canvas и рисуем на нём
-	c := vgimg.New(8*vg.Inch, 8*vg.Inch)
-	dc := draw.NewCanvas(c, 8*vg.Inch, 8*vg.Inch)
+	width := 8 * vg.Inch
+	height := 8 * vg.Inch
+	c := vgimg.New(width, height)
+	dc := draw.NewCanvas(c, width, height)
 
 	// Рисуем сектора
 	i := 0
@@ -79,6 +119,11 @@ func generateAdvancedChart(filename string) {
 		startAngle += angle
 		i++
 	}
+
+	// Добавляем легенду справа
+	legendX := 6 * vg.Inch
+	legendY := 7 * vg.Inch
+	drawLegend(dc, legendX, legendY)
 
 	// Открываем файл для сохранения
 	f, err := os.Create(filename)
@@ -92,7 +137,7 @@ func generateAdvancedChart(filename string) {
 	if err := png.Encode(f, c.Image()); err != nil {
 		fmt.Println("Ошибка при сохранении PNG:", err)
 	} else {
-		fmt.Println("Круговая диаграмма сохранена:", filename)
+		fmt.Println("Круговая диаграмма с легендой сохранена:", filename)
 	}
 }
 
