@@ -23,11 +23,11 @@ RUN apt-get update && apt-get install -y \
 # Устанавливаем рабочую директорию внутри контейнера
 WORKDIR /root/
 
-RUN mkdir /root/fonts
+RUN mkdir /root/python_scripts
 
 # Копируем скомпилированное бинарное приложение из builder-контейнера
 COPY --from=builder /app/bot .
-COPY --from=builder /app/fonts/LiberationSans-Regular.ttf ./fonts
+COPY --from=builder /app/python_scripts/generate_pie_chart.py ./python_scripts
 # COPY --from=builder /app/config.yaml .
 
 # Указываем команду для запуска бота
