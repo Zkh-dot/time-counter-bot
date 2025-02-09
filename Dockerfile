@@ -27,7 +27,7 @@ RUN python3 -m venv /root/venv
 ENV PATH="/root/venv/bin:$PATH"
 
 # Устанавливаем зависимости для Python-скрипта
-RUN pip install --no-cache-dir matplotlib
+RUN pip install --no-cache-dir matplotlib seaborn
 
 # Устанавливаем рабочую директорию внутри контейнера
 WORKDIR /root/
