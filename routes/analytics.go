@@ -9,15 +9,34 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+// Node представляет узел дерева активностей
+type Node struct {
+	ID       int      `json:"id"`
+	Name     string   `json:"name"`
+	ParentID *int     `json:"parent_id,omitempty"`
+	Duration *float64 `json:"duration,omitempty"`
+}
+
+// ChartData содержит список узлов для сериализации
+type ChartData struct {
+	Nodes []Node `json:"nodes"`
+}
+
 // GetDayStatisticsCommand вызывается, когда пользователь запрашивает статистику
 func GetDayStatisticsCommand(message *tgbotapi.Message) {
-	// Данные для диаграммы (пример)
-	data := map[string]float64{
-		"Work":     8,
-		"Sleep":    6,
-		"Leisure":  5,
-		"Exercise": 2,
-		"Eating":   3,
+	// Дерево активностей
+	data := ChartData{
+		Nodes: []Node{
+			{ID: 1, Name: "Work", ParentID: nil, Duration: nil},
+			{ID: 2, Name: "Sleep", ParentID: nil, Duration: floatPtr(6)},
+			{ID: 3, Name: "Leisure", ParentID: nil, Duration: nil},
+			{ID: 4, Name: "Exercise", ParentID: nil, Duration: floatPtr(2)},
+			{ID: 5, Name: "Breakfast", ParentID: intPtr(1), Duration: floatPtr(2)},
+			{ID: 6, Name: "Programming", ParentID: intPtr(1), Duration: nil},
+			{ID: 7, Name: "Golang", ParentID: intPtr(6), Duration: floatPtr(4)},
+			{ID: 8, Name: "Python", ParentID: intPtr(6), Duration: floatPtr(2)},
+			{ID: 9, Name: "Gaming", ParentID: intPtr(3), Duration: floatPtr(5)},
+		},
 	}
 
 	// Кодируем данные в JSON
@@ -27,8 +46,7 @@ func GetDayStatisticsCommand(message *tgbotapi.Message) {
 	}
 
 	// Путь к Python-скрипту
-	scriptName := "generate_pie_chart.py"
-	scriptPath := "python_scripts/" + scriptName
+	scriptPath := "python_scripts/generate_sunburst_chart.py"
 	outputFile := "pie_chart.png"
 
 	// Запускаем Python-скрипт
@@ -44,4 +62,13 @@ func GetDayStatisticsCommand(message *tgbotapi.Message) {
 	if err != nil {
 		log.Fatalf("Ошибка отправки изображения: %v", err)
 	}
+}
+
+// Вспомогательные функции для указателей
+func intPtr(i int) *int {
+	return &i
+}
+
+func floatPtr(f float64) *float64 {
+	return &f
 }

@@ -27,7 +27,7 @@ RUN python3 -m venv /root/venv
 ENV PATH="/root/venv/bin:$PATH"
 
 # Устанавливаем зависимости для Python-скрипта
-RUN pip install --no-cache-dir matplotlib seaborn
+RUN pip install --no-cache-dir matplotlib seaborn squarify
 
 # Устанавливаем рабочую директорию внутри контейнера
 WORKDIR /root/
@@ -36,7 +36,7 @@ RUN mkdir /root/python_scripts
 
 # Копируем скомпилированное бинарное приложение из builder-контейнера
 COPY --from=builder /app/bot .
-COPY --from=builder /app/python_scripts/generate_pie_chart.py ./python_scripts
+COPY --from=builder /app/python_scripts/generate_sunburst_chart.py ./python_scripts
 # COPY --from=builder /app/config.yaml .
 
 # Указываем команду для запуска бота
