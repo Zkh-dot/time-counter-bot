@@ -15,15 +15,19 @@ RUN chmod +x ./bot
 # Шаг 2: Минимальный образ для запуска (без Golang)
 FROM ubuntu:latest
 
-# Устанавливаем необходимые зависимости, включая Python и pip
+# Устанавливаем необходимые зависимости, включая Python
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     python3 \
-    python3-pip \
+    python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
+# Создаём виртуальное окружение для Python
+RUN python3 -m venv /root/venv
+ENV PATH="/root/venv/bin:$PATH"
+
 # Устанавливаем зависимости для Python-скрипта
-RUN pip3 install --no-cache-dir matplotlib
+RUN pip install --no-cache-dir matplotlib
 
 # Устанавливаем рабочую директорию внутри контейнера
 WORKDIR /root/
