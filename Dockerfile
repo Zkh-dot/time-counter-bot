@@ -27,7 +27,7 @@ RUN mkdir /root/fonts
 
 # Копируем скомпилированное бинарное приложение из builder-контейнера
 COPY --from=builder /app/bot .
-COPY --from=builder /app/fonts/LiberationSans-Regular.ttf ./
+COPY --from=builder /app/fonts/LiberationSans-Regular.ttf ./fonts
 # COPY --from=builder /app/config.yaml .
 
 # Указываем команду для запуска бота
