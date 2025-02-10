@@ -76,7 +76,7 @@ func handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 
 // When we get a command, we react accordingly.
 func handleCommand(message *tgbotapi.Message) {
-	switch message.Text {
+	switch strings.Split(message.Text, " ")[0] {
 	case "/start":
 		routes.StartCommand(message)
 
