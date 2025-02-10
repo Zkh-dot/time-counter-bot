@@ -50,7 +50,9 @@ func GetLogDurations(userID common.UserID, start, end time.Time) map[int64]float
 		if err := rows.Scan(&actID, &duration); err != nil {
 			log.Fatal(err)
 		}
-		logDurations[actID] = duration
+		if duration != 0 {
+			logDurations[actID] = duration
+		}
 	}
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
