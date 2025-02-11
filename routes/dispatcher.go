@@ -7,6 +7,8 @@ import (
 	"TimeCounterBot/db"
 )
 
+const DispatchInterval = time.Second * 5
+
 func DispatchNotifications() {
 	now := time.Now()
 
@@ -31,7 +33,7 @@ func DispatchNotifications() {
 		go notifyUser(user)
 	}
 
-	time.Sleep(time.Second * 5)
+	time.Sleep(DispatchInterval)
 
 	go DispatchNotifications()
 }

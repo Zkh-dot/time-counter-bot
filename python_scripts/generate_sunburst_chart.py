@@ -12,25 +12,15 @@
 """
 
 import json
-import sys
-from collections import defaultdict
-
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 import seaborn as sns
+from collections import defaultdict
 
 
 def generate_sunburst_chart(data, output_file):
-    """
-    Генерирует sunburst-диаграмму по данным о дереве активностей и сохраняет её
-    в output_file.
-
-    Для каждого узла отображаются название, суммарная длительность и процент от
-    общего времени. Легенда содержит только листовые узлы (с duration), отсортированные
-    по убыванию длительности.
-    """
-    # Строим словарь узлов и отображение: родитель -> список детей.
+    # Построение словаря узлов и отображения: родитель -> список детей.
     nodes = {node["id"]: node for node in data["nodes"]}
     children = defaultdict(list)
     for node in data["nodes"]:
@@ -49,17 +39,16 @@ def generate_sunburst_chart(data, output_file):
         if node.get("duration") is not None:
             d = node["duration"]
         else:
-            d = sum(
-                compute_duration(child_id)
-                for child_id in children[node_id]
-            )
+            d = sum(compute_duration(child_id)
+                    for child_id in children[node_id])
         computed_duration[node_id] = d
         return d
 
-    for node_id in root_ids:
+    for node_id in nodes:
         compute_duration(node_id)
     total_duration = sum(
-        computed_duration[node_id] for node_id in root_ids
+        node["duration"] for node in nodes.values()
+        if node["duration"] is not None
     )
 
     # Определяем максимальную глубину дерева.
@@ -75,7 +64,18 @@ def generate_sunburst_chart(data, output_file):
     for node_id in root_ids:
         find_max_depth(node_id, 1)
 
-    # Назначаем уникальные цвета для узлов (пастельная палитра).
+    # Вспомогательная функция для получения полного имени листового узла.
+    def get_full_name(node_id):
+        names = []
+        current = nodes[node_id]
+        while True:
+            names.insert(0, current["name"])
+            if current["parent_id"] is None:
+                break
+            current = nodes[current["parent_id"]]
+        return " / ".join(names)
+
+    # Назначаем уникальные цвета (пастельная палитра).
     all_node_ids = list(nodes.keys())
     palette = sns.color_palette("pastel", len(all_node_ids))
     color_dict = {node_id: palette[i]
@@ -86,17 +86,20 @@ def generate_sunburst_chart(data, output_file):
     ax.set_aspect("equal")
     ax.axis("off")
 
-    # Параметр: радиус пустого центра.
+    # Радиус пустого центра.
     base_radius = 1.0
 
-    # Рисуем пустой белый круг в центре.
+    # Рисуем белый круг в центре.
     center_circle = plt.Circle((0, 0), base_radius, color="white", zorder=10)
     ax.add_patch(center_circle)
 
     def draw_node(node_id, start_angle, angle_width, level):
         """
         Рекурсивно рисует сектор кольца для узла и его потомков.
+        Пропускает узлы с нулевой длительностью.
         """
+        if computed_duration[node_id] == 0:
+            return
         inner_radius = base_radius + (level - 1)
         outer_radius = base_radius + level
 
@@ -111,12 +114,10 @@ def generate_sunburst_chart(data, output_file):
         )
         ax.add_patch(wedge)
 
-        node_duration = computed_duration[node_id]
-        node_percentage = node_duration / total_duration * 100
-        display_text = (
-            f"{nodes[node_id]['name']}\n"
-            f"{node_duration} ({node_percentage:.1f}%)"
-        )
+        node_dur = computed_duration[node_id]
+        node_pct = node_dur / total_duration * 100
+        display_text = (f"{nodes[node_id]['name']}\n"
+                        f"{node_dur} ({node_pct:.1f}%)")
 
         mid_angle = start_angle + angle_width / 2
         r_text = (inner_radius + outer_radius) / 2
@@ -128,70 +129,64 @@ def generate_sunburst_chart(data, output_file):
         if rotation < -90:
             rotation += 180
 
-        ax.text(
-            x_text,
-            y_text,
-            display_text,
-            ha="center",
-            va="center",
-            fontsize=9,
-            rotation=rotation,
-            rotation_mode="anchor",
-        )
+        # Используем фиксированный размер шрифта (9 пунктов).
+        ax.text(x_text, y_text, display_text,
+                ha="center", va="center",
+                fontsize=9, rotation=rotation,
+                rotation_mode="anchor")
 
         if children[node_id]:
-            child_start_angle = start_angle
-            parent_duration = computed_duration[node_id]
-            for child_id in children[node_id]:
-                child_duration = computed_duration[child_id]
-                child_angle_width = angle_width * (child_duration / parent_duration)
-                draw_node(
-                    child_id,
-                    child_start_angle,
-                    child_angle_width,
-                    level + 1,
-                )
-                child_start_angle += child_angle_width
+            nonzero_children = [cid for cid in children[node_id]
+                                if computed_duration[cid] > 0]
+            if nonzero_children:
+                total_nonzero = sum(computed_duration[cid]
+                                    for cid in nonzero_children)
+                child_start_angle = start_angle
+                for cid in nonzero_children:
+                    fraction = (computed_duration[cid] / total_nonzero
+                                if total_nonzero else 0)
+                    child_angle = angle_width * fraction
+                    draw_node(cid, child_start_angle, child_angle,
+                              level + 1)
+                    child_start_angle += child_angle
 
     current_angle = 0
     for node_id in root_ids:
-        node_angle_width = 360 * (
-            computed_duration[node_id] / total_duration
-        )
+        if computed_duration[node_id] == 0:
+            continue
+        node_angle_width = 360 * (computed_duration[node_id] / total_duration)
         draw_node(node_id, current_angle, node_angle_width, level=1)
         current_angle += node_angle_width
 
-    # Формирование легенды для листовых узлов.
+    # Формируем легенду для листовых узлов с ненулевой длительностью.
     legend_handles = []
     leaf_nodes = []
     for node_id, node in nodes.items():
-        if node.get("duration") is not None:
+        if (node.get("duration") is not None and
+                computed_duration[node_id] > 0):
             d = computed_duration[node_id]
             leaf_nodes.append((node_id, d))
     leaf_nodes.sort(key=lambda x: x[1], reverse=True)
     for node_id, d in leaf_nodes:
         p = d / total_duration * 100
-        label = f"{nodes[node_id]['name']} - {d} ({p:.1f}%)"
+        full_name = get_full_name(node_id)
+        label = f"{full_name} - {d} ({p:.1f}%)"
         patch = mpatches.Patch(color=color_dict[node_id], label=label)
         legend_handles.append(patch)
-    ax.legend(
-        handles=legend_handles,
-        loc="center left",
-        bbox_to_anchor=(1, 0.5)
-    )
+    ax.legend(handles=legend_handles, loc="center left",
+              bbox_to_anchor=(1, 0.5))
 
     max_radius_value = base_radius + max_depth
     margin = 0.2 * max_radius_value
-    ax.set_xlim(-max_radius_value - margin,
-                max_radius_value + margin)
-    ax.set_ylim(-max_radius_value - margin,
-                max_radius_value + margin)
+    ax.set_xlim(-max_radius_value - margin, max_radius_value + margin)
+    ax.set_ylim(-max_radius_value - margin, max_radius_value + margin)
 
     plt.savefig(output_file, dpi=300, bbox_inches="tight")
     plt.close()
 
 
 if __name__ == "__main__":
+    import sys
     if len(sys.argv) < 3:
         print("Использование: python script.py '<json_data>' output.png")
         sys.exit(1)

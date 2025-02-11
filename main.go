@@ -4,6 +4,8 @@ import (
 	"context"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"TimeCounterBot/db"
 	"TimeCounterBot/routes"
@@ -36,21 +38,27 @@ func main() {
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 60
 
-	// Create a new cancellable background context. Calling `cancel()` leads to the cancellation of the context
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
+	// Создаем контекст с возможностью отмены.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // гарантируем вызов cancel при завершении main
 
-	// `updates` is a golang channel which receives telegram updates
+	// Настраиваем обработку сигналов для корректного завершения работы.
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		sig := <-sigCh
+		log.Printf("Получен сигнал %s, завершаем работу...", sig)
+		cancel()
+	}()
+
 	updates := bot.Bot.GetUpdatesChan(updateConfig)
 
-	// Pass cancellable context to goroutine
 	go router.ReceiveUpdates(ctx, updates)
 	go routes.DispatchNotifications()
 
-	// Tell the user the bot is online
 	log.Println("Start listening for updates. Press enter to stop")
 
-	select {}
-
-	cancel()
+	// Блокируем выполнение до получения cancel.
+	<-ctx.Done()
+	log.Println("Shutting down...")
 }
