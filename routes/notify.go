@@ -44,7 +44,10 @@ func LogUserActivityCallback(callback *tgbotapi.CallbackQuery) {
 		log.Fatal(err)
 	}
 
-	activities := db.GetSimpleActivities(common.UserID(callback.From.ID))
+	activities, err := db.GetSimpleActivities(common.UserID(callback.From.ID))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	idx := slices.IndexFunc(activities, func(a db.Activity) bool { return a.ID == nodeID })
 	if idx == -1 {
@@ -124,7 +127,10 @@ func AddNewActivityCallback(callback *tgbotapi.CallbackQuery) {
 }
 
 func buildActivitiesKeyboardMarkupForUser(user db.User, parentActivityID int64) tgbotapi.InlineKeyboardMarkup {
-	activities := db.GetSimpleActivities(user.ID)
+	activities, err := db.GetSimpleActivities(user.ID)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	rows := make([][]tgbotapi.InlineKeyboardButton, 0)
 

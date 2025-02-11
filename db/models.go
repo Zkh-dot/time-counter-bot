@@ -7,36 +7,37 @@ import (
 	"TimeCounterBot/common"
 )
 
-var (
-	db *sql.DB
-)
-
+// Activity — модель для таблицы activities.
 type Activity struct {
-	ID               int64
-	UserID           int64
-	Name             string
-	ParentActivityID int64
-	IsLeaf           bool
+	ID               int64  `gorm:"primaryKey;autoIncrement"`
+	UserID           int64  `gorm:"not null;index"`
+	Name             string `gorm:"not null"`
+	ParentActivityID int64  `gorm:"not null"`
+	IsLeaf           bool   `gorm:"not null"`
 }
 
+// ActivityLog — модель для таблицы activity_log.
+// Обратите внимание, что первичный ключ составной: (message_id, user_id).
 type ActivityLog struct {
-	MessageID       int64
-	UserID          int64
-	ActivityID      int64
-	Timestamp       time.Time
-	IntervalMinutes int64
+	MessageID       int64     `gorm:"primaryKey;autoIncrement:false"`
+	UserID          int64     `gorm:"primaryKey;autoIncrement:false"`
+	ActivityID      int64     `gorm:"not null"`
+	Timestamp       time.Time `gorm:"not null"`
+	IntervalMinutes int64     `gorm:"not null"`
 }
 
+// User — модель для таблицы users.
 type User struct {
-	ID                        common.UserID
+	ID                        common.UserID `gorm:"primaryKey"`
 	ChatID                    common.ChatID
-	TimerEnabled              bool
+	TimerEnabled              bool `gorm:"not null"`
 	TimerMinutes              sql.NullInt64
 	ScheduleMorningStartHour  sql.NullInt64
 	ScheduleEveningFinishHour sql.NullInt64
 	LastNotify                sql.NullTime
 }
 
+// ActivityRoute — вспомогательная структура для формирования полного пути к листовой активности.
 type ActivityRoute struct {
 	Name   string
 	LeafID int64

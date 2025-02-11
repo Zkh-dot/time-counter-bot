@@ -12,7 +12,10 @@ const DispatchInterval = time.Second * 5
 func DispatchNotifications() {
 	now := time.Now()
 
-	users := db.GetUsers()
+	users, err := db.GetUsers()
+	if err != nil {
+		log.Fatal(err)
+	}
 	for _, user := range users {
 		if !user.TimerEnabled {
 			continue

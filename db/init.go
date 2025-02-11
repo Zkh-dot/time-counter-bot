@@ -1,78 +1,35 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
 
-	_ "github.com/jackc/pgx/v5/stdlib" // PostgreSQL драйвер
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
+// DB — глобальный объект для работы с базой через GORM.
+var DB *gorm.DB
+
+// InitDB инициализирует подключение к PostgreSQL и выполняет миграции.
 func InitDB() {
-	database := getPostgreSQLDatabase()
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		dsn = "postgres://bot:secret@localhost:5432/botdb?sslmode=disable"
+	}
 
-	createTableSQL := `CREATE TABLE IF NOT EXISTS activities (
-		id SERIAL PRIMARY KEY,
-		user_id INTEGER NOT NULL,
-		name TEXT NOT NULL,
-		parent_activity_id INTEGER NOT NULL,
-		is_leaf BOOLEAN NOT NULL
-	);`
-	_, err := database.Exec(createTableSQL)
+	var err error
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("PostgreSQL connection error:", err)
 	}
 
-	createTableSQL = `CREATE TABLE IF NOT EXISTS activity_log (
-		message_id INTEGER,
-		user_id INTEGER,
-		activity_id INTEGER NOT NULL,
-		timestamp TIMESTAMP NOT NULL,
-		interval_minutes INTEGER NOT NULL,
+	fmt.Println("✅ Successfully connected to PostgreSQL via GORM")
 
-		PRIMARY KEY (message_id, user_id)
-	);`
-	_, err = database.Exec(createTableSQL)
+	// Автоматически создаем/обновляем таблицы для моделей.
+	err = DB.AutoMigrate(&Activity{}, &ActivityLog{}, &User{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Migration error:", err)
 	}
-
-	createTableSQL = `CREATE TABLE IF NOT EXISTS users (
-		id INTEGER PRIMARY KEY,
-		chat_id INTEGER,
-		timer_enabled BOOLEAN NOT NULL,
-		timer_minutes INTEGER,
-		schedule_morning_start_hour INTEGER,
-		schedule_evening_finish_hour INTEGER,
-		last_notify TIMESTAMP
-	);`
-	_, err = database.Exec(createTableSQL)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func getPostgreSQLDatabase() *sql.DB {
-	if db == nil || db.Ping() != nil {
-		// Берем строку подключения из переменной окружения (docker-compose)
-		dsn := os.Getenv("DATABASE_URL")
-		if dsn == "" {
-			dsn = "postgres://bot:secret@localhost:5432/botdb?sslmode=disable"
-		}
-
-		// Подключаемся к PostgreSQL
-		var err error
-		db, err = sql.Open("pgx", dsn)
-		if err != nil {
-			log.Fatal("PostgreSQL connection error:", err)
-		}
-
-		// Проверяем соединение
-		if err := db.Ping(); err != nil {
-			log.Fatal("БД недоступна:", err)
-		}
-		fmt.Println("✅ Successful connected to PostgreSQL")
-	}
-	return db
 }

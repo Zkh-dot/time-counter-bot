@@ -34,9 +34,15 @@ func getUserActivityDataForInterval(user db.User, start, end time.Time) Activity
 	var data ActivityData
 
 	// Получаем все активности пользователя.
-	activities := db.GetSimpleActivities(user.ID)
+	activities, err := db.GetSimpleActivities(user.ID)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	logDurations := db.GetLogDurations(user.ID, start, end)
+	logDurations, err := db.GetLogDurations(user.ID, start, end)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Преобразуем полученные активности в ActivityNode.
 	for _, act := range activities {

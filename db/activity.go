@@ -2,152 +2,119 @@ package db
 
 import (
 	"errors"
-	"log"
-	"slices"
+	"strconv"
 	"strings"
 
 	"TimeCounterBot/common"
+	"slices"
 )
 
-func addActivity(activity Activity) int64 {
-	database := getPostgreSQLDatabase()
-
-	insertActivitySQL := `INSERT INTO activities (user_id, name, parent_activity_id, is_leaf) 
-		VALUES ($1, $2, $3, $4) RETURNING id
-	`
-
-	var currentActivityID int64
-	err := database.QueryRow(
-		insertActivitySQL, activity.UserID, activity.Name,
-		activity.ParentActivityID, activity.IsLeaf,
-	).Scan(&currentActivityID)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return currentActivityID
+// addActivity добавляет новую активность и возвращает её ID.
+func addActivity(activity Activity) (int64, error) {
+	result := DB.Create(&activity)
+	return activity.ID, result.Error
 }
 
-func ParseAndAddActivity(userID common.UserID, activity string) {
-	route := strings.Split(activity, " / ")
+// ParseAndAddActivity принимает строку активности в формате
+// "Область / Область поуже / ... / Активность" и добавляет её в базу.
+func ParseAndAddActivity(userID common.UserID, activityStr string) error {
+	parts := strings.Split(activityStr, " / ")
 	var parentActivityID int64 = -1
 
-	existingActivities := GetSimpleActivities(userID)
+	existingActivities, err := GetSimpleActivities(userID)
+	if err != nil {
+		return err
+	}
 
-	for i, part := range route {
+	for i, part := range parts {
 		isLeaf := false
-		if i == len(route)-1 {
+		if i == len(parts)-1 {
 			isLeaf = true
 		}
 
-		idx := slices.IndexFunc(
-			existingActivities,
-			func(a Activity) bool {
-				return a.Name == part && a.ParentActivityID == parentActivityID && a.IsLeaf == isLeaf
-			},
-		)
+		idx := slices.IndexFunc(existingActivities, func(a Activity) bool {
+			return a.Name == part && a.ParentActivityID == parentActivityID && a.IsLeaf == isLeaf
+		})
+
 		if idx == -1 {
-			parentActivityID = addActivity(
-				Activity{
-					UserID:           int64(userID),
-					Name:             part,
-					ParentActivityID: parentActivityID,
-					IsLeaf:           isLeaf,
-				},
-			)
+			newActivity := Activity{
+				UserID:           int64(userID),
+				Name:             part,
+				ParentActivityID: parentActivityID,
+				IsLeaf:           isLeaf,
+			}
+			newID, err := addActivity(newActivity)
+			if err != nil {
+				return err
+			}
+			parentActivityID = newID
+			existingActivities = append(existingActivities, newActivity)
 		} else {
 			parentActivityID = existingActivities[idx].ID
 		}
 	}
+	return nil
 }
 
+// activityDFS выполняет обход активностей для построения полных путей.
 func activityDFS(activities []Activity, vertex int, stack *[]string, ans *[]ActivityRoute) {
 	if activities[vertex].IsLeaf {
-		*ans = append(
-			*ans,
-			ActivityRoute{
-				Name:   strings.Join(*stack, " / ") + " / " + activities[vertex].Name,
-				LeafID: activities[vertex].ID,
-			},
-		)
-
+		*ans = append(*ans, ActivityRoute{
+			Name:   strings.Join(*stack, " / ") + " / " + activities[vertex].Name,
+			LeafID: activities[vertex].ID,
+		})
 		return
 	}
 
 	*stack = append(*stack, activities[vertex].Name)
 
-	for childVertex := range activities {
-		if childVertex == vertex {
-			continue
-		}
-
-		if activities[childVertex].ParentActivityID == activities[vertex].ID {
-			activityDFS(activities, childVertex, stack, ans)
+	for i, a := range activities {
+		if a.ParentActivityID == activities[vertex].ID {
+			activityDFS(activities, i, stack, ans)
 		}
 	}
 
 	*stack = (*stack)[:len(*stack)-1]
 }
 
+// buildActivities строит массив ActivityRoute из списка активностей.
 func buildActivities(activities []Activity) []ActivityRoute {
-	activitiesArray := make([]ActivityRoute, 0)
-
+	var routes []ActivityRoute
 	for i, activity := range activities {
 		if activity.ParentActivityID == -1 {
-			stack := make([]string, 0)
-			activityDFS(activities, i, &stack, &activitiesArray)
+			var stack []string
+			activityDFS(activities, i, &stack, &routes)
 		}
 	}
-
-	return activitiesArray
+	return routes
 }
 
+// GetFullActivityNameByID возвращает полный путь активности по её ID.
 func GetFullActivityNameByID(activityID int64, userID common.UserID) (string, error) {
-	activities := GetFullActivities(userID)
-	for _, activity := range activities {
-		if activity.LeafID == activityID {
-			return activity.Name, nil
-		}
-	}
-
-	return "", errors.New("Activity not found")
-}
-
-func GetSimpleActivities(userID common.UserID) []Activity {
-	database := getPostgreSQLDatabase()
-
-	selectActivitySQL := `SELECT id, user_id, name, parent_activity_id, is_leaf FROM activities
-		WHERE user_id = $1
-	`
-
-	rows, err := database.Query(selectActivitySQL, userID)
+	routes, err := GetFullActivities(userID)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
-	if rows.Err() != nil {
-		log.Fatal(rows.Err())
-	}
-	defer rows.Close()
-
-	activities := make([]Activity, 0)
-
-	for rows.Next() {
-		activity := Activity{}
-
-		err = rows.Scan(&activity.ID, &activity.UserID, &activity.Name,
-			&activity.ParentActivityID, &activity.IsLeaf,
-		)
-		if err != nil {
-			log.Fatal(err)
+	for _, route := range routes {
+		if route.LeafID == activityID {
+			return route.Name, nil
 		}
-
-		activities = append(activities, activity)
 	}
-
-	return activities
+	return "", errors.New("Activity not found: " + strconv.FormatInt(activityID, 10))
 }
 
-func GetFullActivities(userID common.UserID) []ActivityRoute {
-	return buildActivities(GetSimpleActivities(userID))
+// GetSimpleActivities возвращает список активностей пользователя.
+func GetSimpleActivities(userID common.UserID) ([]Activity, error) {
+	var activities []Activity
+	result := DB.Where("user_id = ?", userID).Find(&activities)
+	return activities, result.Error
+}
+
+// GetFullActivities возвращает полное дерево активностей в виде ActivityRoute.
+func GetFullActivities(userID common.UserID) ([]ActivityRoute, error) {
+	activities, err := GetSimpleActivities(userID)
+	if err != nil {
+		return nil, err
+	}
+	return buildActivities(activities), nil
 }
