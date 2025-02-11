@@ -16,7 +16,7 @@ type Activity struct {
 	IsLeaf           bool   `gorm:"not null"`
 }
 
-// ActivityLog — модель для таблицы activity_log.
+// ActivityLog — модель для таблицы activity_logs.
 // Обратите внимание, что первичный ключ составной: (message_id, user_id).
 type ActivityLog struct {
 	MessageID       int64     `gorm:"primaryKey;autoIncrement:false"`
