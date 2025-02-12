@@ -82,11 +82,6 @@ func generateActivityChart(data ActivityData, outputFile string) {
 	// Путь к Python-скрипту и файлу вывода
 	scriptPath := "python_scripts/generate_sunburst_chart.py"
 
-	// Логирование перед запуском
-	log.Printf("📌 Запускаем Python-скрипт: %s", scriptPath)
-	log.Printf("📌 Данные для передачи: %s", string(jsonData))
-	log.Printf("📌 Файл для вывода: %s", outputFile)
-
 	// Создаём команду для запуска Python-скрипта
 	cmd := exec.Command("python3", scriptPath, string(jsonData), outputFile)
 
