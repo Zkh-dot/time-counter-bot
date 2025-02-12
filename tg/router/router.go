@@ -71,6 +71,12 @@ func handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 
 	case "refresh_activities":
 		routes.RefreshActivitiesCallback(callback)
+
+	case "send_day_stats_chart":
+		routes.SendDayStatsRoutineCallback(callback)
+
+	case "refresh_day_stats_chart":
+		routes.RefreshDayStatsChartCallback(callback)
 	}
 }
 
@@ -94,6 +100,9 @@ func handleCommand(message *tgbotapi.Message) {
 
 	case "/get_day_statistics":
 		routes.GetDayStatisticsCommand(message)
+
+	case "/test_day_stats_routine":
+		routes.TestDayStatsRoutine(message)
 
 	}
 }

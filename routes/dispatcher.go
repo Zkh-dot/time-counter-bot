@@ -9,6 +9,10 @@ import (
 
 const DispatchInterval = time.Second * 5
 
+func isTimeInInterval(ts time.Time, startHour, finishHour int64) bool {
+	return ts.Hour() >= int(startHour) && ts.Hour() < int(finishHour)
+}
+
 func DispatchNotifications() {
 	now := time.Now()
 
@@ -25,7 +29,9 @@ func DispatchNotifications() {
 			log.Fatalf("something is invalid for user %d", user.ID)
 		}
 
-		if now.Hour() < int(user.ScheduleMorningStartHour.Int64) || now.Hour() >= int(user.ScheduleEveningFinishHour.Int64) {
+		startHour := user.ScheduleMorningStartHour.Int64
+		finishHour := user.ScheduleEveningFinishHour.Int64
+		if !isTimeInInterval(now, startHour, finishHour) {
 			continue
 		}
 
@@ -34,6 +40,9 @@ func DispatchNotifications() {
 		}
 
 		go notifyUser(user)
+		if !isTimeInInterval(now.Add(time.Minute*time.Duration(user.TimerMinutes.Int64)), startHour, finishHour) {
+
+		}
 	}
 
 	time.Sleep(DispatchInterval)

@@ -72,38 +72,7 @@ func getUserActivityDataForInterval(user db.User, start, end time.Time) Activity
 	return data
 }
 
-// GetDayStatisticsCommand вызывается, когда пользователь запрашивает статистику
-func GetDayStatisticsCommand(message *tgbotapi.Message) {
-	user, err := db.GetUserByID(common.UserID(message.From.ID))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	spl := strings.Split(message.Text, " ")
-	start, err := time.Parse(time.RFC3339, spl[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	end, err := time.Parse(time.RFC3339, spl[2])
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	data := getUserActivityDataForInterval(*user, start, end)
-	// data := ActivityData{
-	// 	Nodes: []ActivityNode{
-	// 		{ID: 1, Name: "Work", ParentID: nil, Duration: nil},
-	// 		{ID: 2, Name: "Sleep", ParentID: nil, Duration: FloatPtr(6)},
-	// 		{ID: 3, Name: "Leisure", ParentID: nil, Duration: nil},
-	// 		{ID: 4, Name: "Exercise", ParentID: nil, Duration: FloatPtr(2)},
-	// 		{ID: 5, Name: "Breakfast", ParentID: IntPtr(1), Duration: FloatPtr(2)},
-	// 		{ID: 6, Name: "Programming", ParentID: IntPtr(1), Duration: nil},
-	// 		{ID: 7, Name: "Golang", ParentID: IntPtr(6), Duration: FloatPtr(4)},
-	// 		{ID: 8, Name: "Python", ParentID: IntPtr(6), Duration: FloatPtr(2)},
-	// 		{ID: 9, Name: "Gaming", ParentID: IntPtr(3), Duration: FloatPtr(5)},
-	// 	},
-	// }
-
+func generateActivityChart(data ActivityData, outputFile string) {
 	// Кодируем данные в JSON
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -112,7 +81,6 @@ func GetDayStatisticsCommand(message *tgbotapi.Message) {
 
 	// Путь к Python-скрипту и файлу вывода
 	scriptPath := "python_scripts/generate_sunburst_chart.py"
-	outputFile := "pie_chart.png"
 
 	// Логирование перед запуском
 	log.Printf("📌 Запускаем Python-скрипт: %s", scriptPath)
@@ -135,6 +103,28 @@ func GetDayStatisticsCommand(message *tgbotapi.Message) {
 	if _, err := os.Stat(outputFile); os.IsNotExist(err) {
 		log.Fatalf("❌ Файл с графиком не найден: %s", outputFile)
 	}
+}
+
+// GetDayStatisticsCommand вызывается, когда пользователь запрашивает статистику
+func GetDayStatisticsCommand(message *tgbotapi.Message) {
+	user, err := db.GetUserByID(common.UserID(message.From.ID))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	spl := strings.Split(message.Text, " ")
+	start, err := time.Parse(time.RFC3339, spl[1])
+	if err != nil {
+		log.Fatal(err)
+	}
+	end, err := time.Parse(time.RFC3339, spl[2])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data := getUserActivityDataForInterval(*user, start, end)
+	outputFile := "pie_chart.png"
+	generateActivityChart(data, outputFile)
 
 	// Отправляем картинку в Telegram
 	msgconf := tgbotapi.NewPhoto(int64(message.Chat.ID), tgbotapi.FilePath(outputFile))
