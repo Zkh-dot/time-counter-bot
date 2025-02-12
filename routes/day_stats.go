@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -90,7 +91,7 @@ func SendDayStatsRoutineCallback(callback *tgbotapi.CallbackQuery) {
 	}
 
 	_, err = tg.Bot.Send(tgbotapi.NewDeleteMessage(int64(user.ChatID), callback.Message.MessageID))
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "cannot unmarshal bool into Go value of type tgbotapi.Message") {
 		log.Fatal(err)
 	}
 
@@ -105,7 +106,7 @@ func RefreshDayStatsChartCallback(callback *tgbotapi.CallbackQuery) {
 
 	var tsStartUnix int64
 	var tsEndUnix int64
-	_, err = fmt.Sscanf(callback.Data, "refresh_day_stats_chart %s %s", &tsStartUnix, &tsEndUnix)
+	_, err = fmt.Sscanf(callback.Data, "refresh_day_stats_chart %d %d", &tsStartUnix, &tsEndUnix)
 	if err != nil {
 		log.Fatal(err)
 	}
