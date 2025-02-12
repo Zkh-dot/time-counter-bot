@@ -22,6 +22,7 @@ func TestDayStatsRoutine(message *tgbotapi.Message) {
 }
 
 func startDayStatsRoutine(user db.User) {
+	time.Sleep(5 * time.Second)
 	msgconf := tgbotapi.NewMessage(int64(user.ChatID), "Если заполнил все активности за сегодня - ЖМИ НА КНОПКУ!")
 	msgconf.ReplyMarkup = buildDayStatsRoutineKeyboardMarkup()
 

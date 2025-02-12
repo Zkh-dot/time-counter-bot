@@ -41,7 +41,7 @@ func DispatchNotifications() {
 
 		go notifyUser(user)
 		if !isTimeInInterval(now.Add(time.Minute*time.Duration(user.TimerMinutes.Int64)), startHour, finishHour) {
-
+			go startDayStatsRoutine(user)
 		}
 	}
 
