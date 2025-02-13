@@ -72,22 +72,25 @@ func handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 	case "refresh_activities":
 		routes.RefreshActivitiesCallback(callback)
 
-	case "send_day_stats_chart":
+	case "day_stats__send_chart":
 		routes.SendDayStatsRoutineCallback(callback)
 
-	case "set_timer_minutes":
+	case "day_stats__refresh_chart":
+		routes.RefreshDayStatsChartCallback(callback)
+
+	case "start__set_timer_minutes":
 		routes.SetTimerMinutesCallback(callback)
 
-	case "schedule_morning_start_hour":
+	case "start__schedule_morning_start_hour":
 		routes.SetScheduleMorningStartHourCallback(callback)
 
-	case "schedule_evening_finish_hour":
+	case "start__schedule_evening_finish_hour":
 		routes.SetScheduleEveningFinishHourCallback(callback)
 
-	case "enable_notifications":
+	case "start__enable_notifications":
 		routes.EnableNotificationsCallback(callback)
 
-	case "disable_notifications":
+	case "start__disable_notifications":
 		routes.DisableNotificationsCallback(callback)
 	}
 }

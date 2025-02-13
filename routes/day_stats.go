@@ -42,7 +42,7 @@ func buildDayStatsRoutineKeyboardMarkup() tgbotapi.InlineKeyboardMarkup {
 	now := time.Now()
 	log.Println("buildDayStatsRoutineKeyboardMarkup: ", now)
 	callbackData := fmt.Sprintf(
-		"send_day_stats_chart %d %d",
+		"day_stats__send_chart %d %d",
 		now.Add(-Day).Unix(),
 		now.Unix(),
 	)
@@ -62,7 +62,7 @@ func SendDayStatsRoutineCallback(callback *tgbotapi.CallbackQuery) {
 
 	var tsStartUnix int64
 	var tsEndUnix int64
-	_, err = fmt.Sscanf(callback.Data, "send_day_stats_chart %d %d", &tsStartUnix, &tsEndUnix)
+	_, err = fmt.Sscanf(callback.Data, "day_stats__send_chart %d %d", &tsStartUnix, &tsEndUnix)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -85,7 +85,7 @@ func SendDayStatsRoutineCallback(callback *tgbotapi.CallbackQuery) {
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData(
 				"\U0001F504 Refresh chart",
-				fmt.Sprintf("refresh_day_stats_chart %d %d", tsStartUnix, tsEndUnix)),
+				fmt.Sprintf("day_stats__refresh_chart %d %d", tsStartUnix, tsEndUnix)),
 		),
 	)
 
@@ -110,7 +110,7 @@ func RefreshDayStatsChartCallback(callback *tgbotapi.CallbackQuery) {
 
 	var tsStartUnix int64
 	var tsEndUnix int64
-	_, err = fmt.Sscanf(callback.Data, "refresh_day_stats_chart %d %d", &tsStartUnix, &tsEndUnix)
+	_, err = fmt.Sscanf(callback.Data, "day_stats__refresh_chart %d %d", &tsStartUnix, &tsEndUnix)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -133,7 +133,7 @@ func RefreshDayStatsChartCallback(callback *tgbotapi.CallbackQuery) {
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData(
 				"\U0001F504 Refresh chart",
-				fmt.Sprintf("refresh_day_stats_chart %d %d", tsStartUnix, tsEndUnix)),
+				fmt.Sprintf("day_stats__refresh_chart %d %d", tsStartUnix, tsEndUnix)),
 		),
 	)
 	// Формируем конфигурацию редактирования медиа
