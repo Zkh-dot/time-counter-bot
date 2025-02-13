@@ -113,17 +113,28 @@ func SetScheduleEveningFinishHourCallback(callback *tgbotapi.CallbackQuery) {
 		log.Fatal(err)
 	}
 
+	var text string
+	var keyboardMarkup tgbotapi.InlineKeyboardMarkup
+	if user.TimerEnabled {
+		text = "You will get notifications every %d minutes, from %d:00 UTC to %d:00 UTC.\n" +
+			"Notifications enabled! You can disable them by pressing button below."
+		keyboardMarkup = getDisableNotificationsKeyboardMarkup()
+	} else {
+		text = "Cool. You will get notifications every %d minutes, from %d:00 UTC to %d:00 UTC.\n" +
+			"Now click the button to enable notifications."
+		keyboardMarkup = getEnableNotificationsKeyboardMarkup()
+	}
+
 	msg := tgbotapi.NewEditMessageTextAndMarkup(
 		int64(user.ChatID),
 		callback.Message.MessageID,
 		fmt.Sprintf(
-			"Cool. You will get notifications every %d minutes, from %d:00 UTC to %d:00 UTC.\n"+
-				"Now click the button to enable notifications.",
+			text,
 			user.TimerMinutes.Int64,
 			user.ScheduleMorningStartHour.Int64,
 			user.ScheduleEveningFinishHour.Int64,
 		),
-		getEnableNotificationsKeyboardMarkup(),
+		keyboardMarkup,
 	)
 
 	_, err = bot.Bot.Send(msg)
