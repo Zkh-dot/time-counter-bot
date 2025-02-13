@@ -183,7 +183,7 @@ func DisableNotificationsCallback(callback *tgbotapi.CallbackQuery) {
 			user.ScheduleMorningStartHour.Int64,
 			user.ScheduleEveningFinishHour.Int64,
 		),
-		getDisableNotificationsKeyboardMarkup(),
+		getEnableNotificationsKeyboardMarkup(),
 	)
 
 	_, err = bot.Bot.Send(msg)
