@@ -268,7 +268,10 @@ func getDisableNotificationsKeyboardMarkup() tgbotapi.InlineKeyboardMarkup {
 	return tgbotapi.NewInlineKeyboardMarkup(
 		append(
 			make([]tgbotapi.InlineKeyboardButton, 0),
-			tgbotapi.InlineKeyboardButton{Text: "Disable notifications!", CallbackData: StringPtr("start__disable_notifications")},
+			tgbotapi.InlineKeyboardButton{
+				Text:         "Disable notifications!",
+				CallbackData: StringPtr("start__disable_notifications"),
+			},
 		),
 	)
 }

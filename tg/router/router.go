@@ -45,10 +45,10 @@ func handleMessage(message *tgbotapi.Message) {
 
 	userID := common.UserID(user.ID)
 
-	MaybeAddNewUser(userID, common.ChatID(message.Chat.ID))
+	maybeAddNewUser(userID, common.ChatID(message.Chat.ID))
 
 	// Print to console
-	log.Printf("%s wrote %s", user.FirstName, message.Text)
+	log.Printf("%s wrote %s", user.UserName, message.Text)
 
 	if strings.HasPrefix(message.Text, "/") {
 		handleCommand(message)
@@ -122,7 +122,7 @@ func handleCommand(message *tgbotapi.Message) {
 	}
 }
 
-func MaybeAddNewUser(userID common.UserID, chatID common.ChatID) {
+func maybeAddNewUser(userID common.UserID, chatID common.ChatID) {
 	_, err := db.GetUserByID(userID)
 	if err != nil && !strings.Contains(err.Error(), "was not found") {
 		log.Fatal(err)
