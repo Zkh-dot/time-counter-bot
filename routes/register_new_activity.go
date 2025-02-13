@@ -6,6 +6,7 @@ import (
 	"TimeCounterBot/common"
 	"TimeCounterBot/db"
 	"TimeCounterBot/tg/bot"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -49,7 +50,10 @@ func registerNewActivity(user db.User) {
 	}
 
 	ans := <-waitChan
-	db.ParseAndAddActivity(user.ID, ans)
+	err = db.ParseAndAddActivity(user.ID, ans)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	close(waitChan)
 

@@ -6,14 +6,14 @@ import (
 
 // AddUser добавляет нового пользователя в базу.
 func AddUser(user User) error {
-	result := DB.Create(&user)
+	result := GormDB.Create(&user)
 	return result.Error
 }
 
 // GetUserByID возвращает пользователя по его идентификатору.
 func GetUserByID(userID common.UserID) (*User, error) {
 	var user User
-	result := DB.First(&user, "id = ?", userID)
+	result := GormDB.First(&user, "id = ?", userID)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -22,13 +22,13 @@ func GetUserByID(userID common.UserID) (*User, error) {
 
 // UpdateUser обновляет данные пользователя.
 func UpdateUser(user User) error {
-	result := DB.Save(&user)
+	result := GormDB.Save(&user)
 	return result.Error
 }
 
 // GetUsers возвращает список всех пользователей.
 func GetUsers() ([]User, error) {
 	var users []User
-	result := DB.Find(&users)
+	result := GormDB.Find(&users)
 	return users, result.Error
 }

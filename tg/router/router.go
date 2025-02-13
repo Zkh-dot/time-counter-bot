@@ -75,8 +75,20 @@ func handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 	case "send_day_stats_chart":
 		routes.SendDayStatsRoutineCallback(callback)
 
-	case "refresh_day_stats_chart":
-		routes.RefreshDayStatsChartCallback(callback)
+	case "set_timer_minutes":
+		routes.SetTimerMinutesCallback(callback)
+
+	case "schedule_morning_start_hour":
+		routes.SetScheduleMorningStartHourCallback(callback)
+
+	case "schedule_evening_finish_hour":
+		routes.SetScheduleEveningFinishHourCallback(callback)
+
+	case "enable_notifications":
+		routes.EnableNotificationsCallback(callback)
+
+	case "disable_notifications":
+		routes.DisableNotificationsCallback(callback)
 	}
 }
 
@@ -114,7 +126,7 @@ func MaybeAddNewUser(userID common.UserID, chatID common.ChatID) {
 	}
 
 	if err != nil && strings.Contains(err.Error(), "was not found") {
-		db.AddUser(
+		err = db.AddUser(
 			db.User{
 				ID:                        userID,
 				ChatID:                    chatID,
@@ -125,5 +137,8 @@ func MaybeAddNewUser(userID common.UserID, chatID common.ChatID) {
 				LastNotify:                sql.NullTime{},
 			},
 		)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }

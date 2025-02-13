@@ -13,6 +13,9 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+const Day time.Duration = time.Duration(24) * time.Hour
+const DayStatsWaitDuration time.Duration = 5 * time.Second
+
 func TestDayStatsRoutine(message *tgbotapi.Message) {
 	user, err := db.GetUserByID(common.UserID(message.From.ID))
 	if err != nil {
@@ -22,7 +25,7 @@ func TestDayStatsRoutine(message *tgbotapi.Message) {
 }
 
 func startDayStatsRoutine(user db.User) {
-	time.Sleep(5 * time.Second)
+	time.Sleep(DayStatsWaitDuration)
 	msgconf := tgbotapi.NewMessage(int64(user.ChatID), "Если заполнил все активности за сегодня - ЖМИ НА КНОПКУ!")
 	msgconf.ReplyMarkup = buildDayStatsRoutineKeyboardMarkup()
 
@@ -40,7 +43,7 @@ func buildDayStatsRoutineKeyboardMarkup() tgbotapi.InlineKeyboardMarkup {
 	log.Println("buildDayStatsRoutineKeyboardMarkup: ", now)
 	callbackData := fmt.Sprintf(
 		"send_day_stats_chart %d %d",
-		now.Add(-time.Duration(24)*time.Hour).Unix(),
+		now.Add(-Day).Unix(),
 		now.Unix(),
 	)
 	rows[0][0] = tgbotapi.InlineKeyboardButton{

@@ -6,6 +6,7 @@ import (
 	"TimeCounterBot/common"
 	"TimeCounterBot/db"
 	"TimeCounterBot/tg/bot"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -34,7 +35,10 @@ func StartNotifyCommand(message *tgbotapi.Message) {
 	}
 
 	user.TimerEnabled = true
-	db.UpdateUser(*user)
+	err = db.UpdateUser(*user)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func StopNotifyCommand(message *tgbotapi.Message) {
@@ -62,7 +66,10 @@ func StopNotifyCommand(message *tgbotapi.Message) {
 	}
 
 	user.TimerEnabled = false
-	db.UpdateUser(*user)
+	err = db.UpdateUser(*user)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func TestNotifyCommand(message *tgbotapi.Message) {

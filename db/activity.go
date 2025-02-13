@@ -11,7 +11,7 @@ import (
 
 // addActivity добавляет новую активность и возвращает её ID.
 func addActivity(activity Activity) (int64, error) {
-	result := DB.Create(&activity)
+	result := GormDB.Create(&activity)
 	return activity.ID, result.Error
 }
 
@@ -106,7 +106,7 @@ func GetFullActivityNameByID(activityID int64, userID common.UserID) (string, er
 // GetSimpleActivities возвращает список активностей пользователя.
 func GetSimpleActivities(userID common.UserID) ([]Activity, error) {
 	var activities []Activity
-	result := DB.Where("user_id = ?", userID).Find(&activities)
+	result := GormDB.Where("user_id = ?", userID).Find(&activities)
 	return activities, result.Error
 }
 

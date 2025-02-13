@@ -9,8 +9,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// DB — глобальный объект для работы с базой через GORM.
-var DB *gorm.DB
+// GormDB — глобальный объект для работы с базой через GORM.
+var GormDB *gorm.DB
 
 // InitDB инициализирует подключение к PostgreSQL и выполняет миграции.
 func InitDB() {
@@ -20,7 +20,7 @@ func InitDB() {
 	}
 
 	var err error
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	GormDB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("PostgreSQL connection error:", err)
 	}
@@ -28,7 +28,7 @@ func InitDB() {
 	fmt.Println("✅ Successfully connected to PostgreSQL via GORM")
 
 	// Автоматически создаем/обновляем таблицы для моделей.
-	err = DB.AutoMigrate(&Activity{}, &ActivityLog{}, &User{})
+	err = GormDB.AutoMigrate(&Activity{}, &ActivityLog{}, &User{})
 	if err != nil {
 		log.Fatal("Migration error:", err)
 	}

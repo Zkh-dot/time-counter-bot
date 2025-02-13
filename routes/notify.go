@@ -23,12 +23,15 @@ import (
 
 func notifyUser(user db.User) {
 	user.LastNotify = sql.NullTime{Time: time.Now(), Valid: true}
-	db.UpdateUser(user)
+	err := db.UpdateUser(user)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	msgconf := tgbotapi.NewMessage(int64(user.ChatID), "Чё делаеш?))0)")
 	msgconf.ReplyMarkup = buildActivitiesKeyboardMarkupForUser(user, -1)
 
-	_, err := tg.Bot.Send(msgconf)
+	_, err = tg.Bot.Send(msgconf)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -55,7 +58,7 @@ func LogUserActivityCallback(callback *tgbotapi.CallbackQuery) {
 	}
 
 	if activities[idx].IsLeaf {
-		db.AddActivityLog(
+		err = db.AddActivityLog(
 			db.ActivityLog{
 				MessageID:       int64(callback.Message.MessageID),
 				UserID:          callback.From.ID,
@@ -64,6 +67,9 @@ func LogUserActivityCallback(callback *tgbotapi.CallbackQuery) {
 				IntervalMinutes: timerMinutes,
 			},
 		)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		activityName, err := db.GetFullActivityNameByID(nodeID, common.UserID(callback.From.ID))
 		if err != nil {
