@@ -124,11 +124,11 @@ func handleCommand(message *tgbotapi.Message) {
 
 func maybeAddNewUser(userID common.UserID, chatID common.ChatID) {
 	_, err := db.GetUserByID(userID)
-	if err != nil && !strings.Contains(err.Error(), "was not found") {
+	if err != nil && !strings.Contains(err.Error(), "record not found") {
 		log.Fatal(err)
 	}
 
-	if err != nil && strings.Contains(err.Error(), "was not found") {
+	if err != nil && strings.Contains(err.Error(), "record not found") {
 		err = db.AddUser(
 			db.User{
 				ID:                        userID,
