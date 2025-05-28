@@ -91,8 +91,7 @@ func buildActivities(activities []Activity) []ActivityRoute {
 
 // GetFullActivityNameByID возвращает полный путь активности по её ID.
 func GetFullActivityNameByID(activityID int64, userID common.UserID) (string, error) {
-	isMuted := false
-	routes, err := GetFullActivities(userID, &isMuted)
+	routes, err := GetFullActivities(userID, nil)
 	if err != nil {
 		return "", err
 	}
@@ -126,8 +125,84 @@ func GetFullActivities(userID common.UserID, isMuted *bool) ([]ActivityRoute, er
 	return buildActivities(activities), nil
 }
 
-func SetIsMutedActivity(activityID int64, isMuted bool) {
-	GormDB.Model(&Activity{}).
+func MuteActivityAndMaybeParents(activityID int64) error {
+	if err := GormDB.Model(&Activity{}).
 		Where("id = ?", activityID).
-		Update("is_muted", isMuted)
+		Update("is_muted", true).Error; err != nil {
+		return err
+	}
+
+	return muteParentIfNeeded(activityID)
+}
+
+func muteParentIfNeeded(childID int64) error {
+	var activity Activity
+	if err := GormDB.First(&activity, childID).Error; err != nil {
+		return err
+	}
+
+	// Если у активности нет родителя — остановить
+	if activity.ParentActivityID == -1 {
+		return nil
+	}
+
+	parentID := activity.ParentActivityID
+
+	// Проверяем, остались ли у родителя незамьюченные дети
+	var count int64
+	if err := GormDB.Model(&Activity{}).
+		Where("parent_activity_id = ? AND is_muted = false", parentID).
+		Count(&count).Error; err != nil {
+		return err
+	}
+
+	if count == 0 {
+		// Мьютим родителя
+		if err := GormDB.Model(&Activity{}).
+			Where("id = ?", parentID).
+			Update("is_muted", true).Error; err != nil {
+			return err
+		}
+		// Рекурсивно поднимаемся выше
+		return muteParentIfNeeded(parentID)
+	}
+
+	// Есть незамьюченные дети — ничего не делаем
+	return nil
+}
+
+func UnmuteActivityAndMaybeParents(activityID int64) error {
+	// Шаг 1: размьючиваем саму активность
+	if err := GormDB.Model(&Activity{}).
+		Where("id = ?", activityID).
+		Update("is_muted", false).Error; err != nil {
+		return err
+	}
+
+	// Шаг 2: рекурсивно размьючиваем родителей
+	return recursivelyUnmuteParents(activityID)
+}
+
+func recursivelyUnmuteParents(childID int64) error {
+	var activity Activity
+	if err := GormDB.First(&activity, childID).Error; err != nil {
+		return err
+	}
+
+	if activity.ParentActivityID == -1 {
+		return nil
+	}
+
+	parentID := activity.ParentActivityID
+
+	// Мы точно знаем, что у родителя есть хотя бы один незамьюченный ребёнок (текущий)
+	// Поэтому можно сразу размьютить родителя
+	if err := GormDB.Model(&Activity{}).
+		Where("id = ?", parentID).
+		Update("is_muted", false).Error; err != nil {
+		return err
+	}
+
+	// Рекурсивно поднимаемся вверх
+	return recursivelyUnmuteParents(parentID)
 }

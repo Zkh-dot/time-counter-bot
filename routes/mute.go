@@ -11,7 +11,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func MuteActivityCommand(message *tgbotapi.Message) {
+func MuteActivityCommand(message *tgbotapi.Message, mute bool) {
 	tgUser := message.From
 	if tgUser == nil {
 		return
@@ -24,10 +24,18 @@ func MuteActivityCommand(message *tgbotapi.Message) {
 		log.Fatal(err)
 	}
 
-	msgconf := tgbotapi.NewMessage(int64(user.ChatID), "Что хочешь замьютить?")
+	msgText := "Что хочешь размьютить?"
+	callbackCommand := "unmute_activity__unmute"
 	isMuted := false
+	if mute {
+		msgText = "Что хочешь замьютить?"
+		callbackCommand = "mute_activity__mute"
+		isMuted = true
+	}
+
+	msgconf := tgbotapi.NewMessage(int64(user.ChatID), msgText)
 	msgconf.ReplyMarkup = buildActivitiesKeyboardMarkupForUser(
-		*user, -1, &isMuted, "mute_activity__mute", getMuteActivitiesLastRow())
+		*user, -1, &isMuted, callbackCommand, getMuteActivitiesLastRow(mute))
 
 	_, err = bot.Bot.Send(msgconf)
 	if err != nil {
@@ -36,7 +44,7 @@ func MuteActivityCommand(message *tgbotapi.Message) {
 }
 
 func MuteActivityCancelCallback(callback *tgbotapi.CallbackQuery) {
-	_, err := bot.Bot.Send(
+	_, err := bot.Bot.Request(
 		tgbotapi.NewDeleteMessage(callback.Message.Chat.ID, callback.Message.MessageID),
 	)
 	if err != nil {
@@ -44,35 +52,48 @@ func MuteActivityCancelCallback(callback *tgbotapi.CallbackQuery) {
 	}
 }
 
-func MuteActivityRefreshCallback(callback *tgbotapi.CallbackQuery) {
+func MuteActivityRefreshCallback(callback *tgbotapi.CallbackQuery, mute bool) {
 	user, err := db.GetUserByID(common.UserID(callback.From.ID))
 	if err != nil {
 		log.Fatal(err)
 	}
-	isMuted := false
+	isMuted := true
+	msgText := "Что хочешь размьютить?"
+	callbackCommand := "unmute_activity__unmute"
+	if mute {
+		isMuted = false
+		msgText = "Что хочешь замьютить?"
+		callbackCommand = "mute_activity__mute"
+	}
+
 	msgconf := tgbotapi.NewEditMessageTextAndMarkup(
 		int64(user.ChatID),
 		callback.Message.MessageID,
-		"Что хочешь замьютить?",
+		msgText,
 		buildActivitiesKeyboardMarkupForUser(
-			*user, -1, &isMuted, "mute_activity__mute", getMuteActivitiesLastRow()))
+			*user, -1, &isMuted, callbackCommand, getMuteActivitiesLastRow(mute)))
 	_, err = bot.Bot.Send(msgconf)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func MuteActivityCallback(callback *tgbotapi.CallbackQuery) {
+func MuteActivityCallback(callback *tgbotapi.CallbackQuery, mute bool) {
 	var nodeID int64
-
 	var timerMinutes int64
-
-	_, err := fmt.Sscanf(callback.Data, "mute_activity__mute %d %d", &nodeID, &timerMinutes)
+	var callbackCommand string
+	_, err := fmt.Sscanf(callback.Data, "%s %d %d", &callbackCommand, &nodeID, &timerMinutes)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	isMuted := false
+	isMuted := true
+	finalMsgFirstPart := "Unmuted activity"
+	if mute {
+		isMuted = false
+		finalMsgFirstPart = "Muted activity"
+	}
+
 	activities, err := db.GetSimpleActivities(common.UserID(callback.From.ID), &isMuted)
 	if err != nil {
 		log.Fatal(err)
@@ -84,7 +105,17 @@ func MuteActivityCallback(callback *tgbotapi.CallbackQuery) {
 	}
 
 	if activities[idx].IsLeaf {
-		db.SetIsMutedActivity(activities[idx].ID, true)
+		if mute {
+			err = db.MuteActivityAndMaybeParents(nodeID)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			err = db.UnmuteActivityAndMaybeParents(nodeID)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 
 		activityName, err := db.GetFullActivityNameByID(nodeID, common.UserID(callback.From.ID))
 		if err != nil {
@@ -94,7 +125,7 @@ func MuteActivityCallback(callback *tgbotapi.CallbackQuery) {
 		_, err = bot.Bot.Send(
 			tgbotapi.NewEditMessageTextAndMarkup(
 				callback.Message.Chat.ID, callback.Message.MessageID,
-				"Muted activity \""+activityName+"\"",
+				finalMsgFirstPart+" \""+activityName+"\"",
 				tgbotapi.InlineKeyboardMarkup{InlineKeyboard: make([][]tgbotapi.InlineKeyboardButton, 0)},
 			),
 		)
@@ -107,9 +138,8 @@ func MuteActivityCallback(callback *tgbotapi.CallbackQuery) {
 			log.Fatal(err)
 		}
 
-		isMuted := false
 		keyboard := buildActivitiesKeyboardMarkupForUser(
-			*user, nodeID, &isMuted, "mute_activity__mute", getMuteActivitiesLastRow())
+			*user, nodeID, &isMuted, callbackCommand, getMuteActivitiesLastRow(mute))
 
 		_, err = bot.Bot.Send(
 			tgbotapi.NewEditMessageTextAndMarkup(
@@ -122,24 +152,22 @@ func MuteActivityCallback(callback *tgbotapi.CallbackQuery) {
 	}
 }
 
-func getMuteActivitiesLastRow() []tgbotapi.InlineKeyboardButton {
-	CancelMuteCallbackText := "mute_activity__cancel"
-	refreshActivitiesCallbackText := "mute_activity__refresh"
+func getMuteActivitiesLastRow(mute bool) []tgbotapi.InlineKeyboardButton {
+	cancelMuteCallbackText := "unmute_activity__cancel"
+	refreshActivitiesCallbackText := "unmute_activity__refresh"
+	if mute {
+		cancelMuteCallbackText = "mute_activity__cancel"
+		refreshActivitiesCallbackText = "mute_activity__refresh"
+	}
 	return append(
 		make([]tgbotapi.InlineKeyboardButton, 0),
 		tgbotapi.InlineKeyboardButton{
 			Text:         "\U0000274C Cancel",
-			CallbackData: &CancelMuteCallbackText,
+			CallbackData: &cancelMuteCallbackText,
 		},
 		tgbotapi.InlineKeyboardButton{
 			Text:         "\U0001F504 Refresh activities",
 			CallbackData: &refreshActivitiesCallbackText,
 		},
 	)
-}
-
-func UnmuteActivityCommand(message *tgbotapi.Message) {
-}
-
-func UnmuteActivityCallback(callback *tgbotapi.CallbackQuery) {
 }

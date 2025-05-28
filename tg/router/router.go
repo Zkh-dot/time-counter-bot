@@ -25,10 +25,6 @@ func SetCommands() {
 			Description: "Зарегистрировать новую активность",
 		},
 		{
-			Command:     "get_day_statistics",
-			Description: "Получить статистику за определённый период времени",
-		},
-		{
 			Command:     "start_notify",
 			Description: "Начать присылать уведомления",
 		},
@@ -43,6 +39,10 @@ func SetCommands() {
 		{
 			Command:     "unmute_activity",
 			Description: "Размьютить активность (чтобы снова появилась в регулярных опросах)",
+		},
+		{
+			Command:     "get_day_statistics",
+			Description: "Получить статистику за определённый период времени",
 		},
 	}
 
@@ -105,45 +105,40 @@ func handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 	switch dataPath {
 	case "activity_log":
 		routes.LogUserActivityCallback(callback)
-
 	case "register_new_activity":
 		routes.AddNewActivityCallback(callback)
-
 	case "refresh_activities":
 		routes.RefreshActivitiesCallback(callback)
 
 	case "day_stats__send_chart":
 		routes.SendDayStatsRoutineCallback(callback)
-
 	case "day_stats__refresh_chart":
 		routes.RefreshDayStatsChartCallback(callback)
 
 	case "start__set_timer_minutes":
 		routes.SetTimerMinutesCallback(callback)
-
 	case "start__schedule_morning_start_hour":
 		routes.SetScheduleMorningStartHourCallback(callback)
-
 	case "start__schedule_evening_finish_hour":
 		routes.SetScheduleEveningFinishHourCallback(callback)
-
 	case "start__enable_notifications":
 		routes.EnableNotificationsCallback(callback)
-
 	case "start__disable_notifications":
 		routes.DisableNotificationsCallback(callback)
 
 	case "mute_activity__mute":
-		routes.MuteActivityCallback(callback)
-
+		routes.MuteActivityCallback(callback, true)
 	case "mute_activity__cancel":
 		routes.MuteActivityCancelCallback(callback)
-
 	case "mute_activity__refresh":
-		routes.MuteActivityRefreshCallback(callback)
+		routes.MuteActivityRefreshCallback(callback, true)
 
-	case "unmute_activity":
-		routes.UnmuteActivityCallback(callback)
+	case "unmute_activity__unmute":
+		routes.MuteActivityCallback(callback, false)
+	case "unmute_activity__cancel":
+		routes.MuteActivityCancelCallback(callback)
+	case "unmute_activity__refresh":
+		routes.MuteActivityRefreshCallback(callback, false)
 	}
 }
 
@@ -172,10 +167,10 @@ func handleCommand(message *tgbotapi.Message) {
 		routes.TestDayStatsRoutine(message)
 
 	case "/mute_activity":
-		routes.MuteActivityCommand(message)
+		routes.MuteActivityCommand(message, true)
 
 	case "/unmute_activity":
-		routes.UnmuteActivityCommand(message)
+		routes.MuteActivityCommand(message, false)
 
 	}
 }
