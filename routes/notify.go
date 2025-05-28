@@ -31,7 +31,7 @@ func notifyUser(user db.User) {
 	msgconf := tgbotapi.NewMessage(int64(user.ChatID), "Чё делаеш?))0)")
 	isMuted := false
 	msgconf.ReplyMarkup = buildActivitiesKeyboardMarkupForUser(
-		user, -1, &isMuted, "activity_log", getStandardActivitiesLastRow())
+		user, -1, &isMuted, nil, "activity_log", getStandardActivitiesLastRow())
 
 	_, err = tg.Bot.Send(msgconf)
 	if err != nil {
@@ -50,7 +50,7 @@ func LogUserActivityCallback(callback *tgbotapi.CallbackQuery) {
 	}
 
 	isMuted := false
-	activities, err := db.GetSimpleActivities(common.UserID(callback.From.ID), &isMuted)
+	activities, err := db.GetSimpleActivities(common.UserID(callback.From.ID), &isMuted, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -97,7 +97,7 @@ func LogUserActivityCallback(callback *tgbotapi.CallbackQuery) {
 
 		isMuted := false
 		keyboard := buildActivitiesKeyboardMarkupForUser(
-			*user, nodeID, &isMuted, "activity_log", getStandardActivitiesLastRow())
+			*user, nodeID, &isMuted, nil, "activity_log", getStandardActivitiesLastRow())
 
 		_, err = tg.Bot.Send(
 			tgbotapi.NewEditMessageTextAndMarkup(
@@ -118,7 +118,7 @@ func RefreshActivitiesCallback(callback *tgbotapi.CallbackQuery) {
 
 	isMuted := false
 	keyboard := buildActivitiesKeyboardMarkupForUser(
-		*user, -1, &isMuted, "activity_log", getStandardActivitiesLastRow())
+		*user, -1, &isMuted, nil, "activity_log", getStandardActivitiesLastRow())
 
 	_, err = tg.Bot.Send(
 		tgbotapi.NewEditMessageTextAndMarkup(
@@ -140,9 +140,9 @@ func AddNewActivityCallback(callback *tgbotapi.CallbackQuery) {
 }
 
 func buildActivitiesKeyboardMarkupForUser(
-	user db.User, parentActivityID int64, isMuted *bool,
+	user db.User, parentActivityID int64, isMuted *bool, hasMutedLeaves *bool,
 	callbackCommand string, lastRow []tgbotapi.InlineKeyboardButton) tgbotapi.InlineKeyboardMarkup {
-	activities, err := db.GetSimpleActivities(user.ID, isMuted)
+	activities, err := db.GetSimpleActivities(user.ID, isMuted, hasMutedLeaves)
 	if err != nil {
 		log.Fatal(err)
 	}

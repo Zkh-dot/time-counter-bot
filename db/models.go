@@ -15,6 +15,7 @@ type Activity struct {
 	ParentActivityID int64  `gorm:"not null"`
 	IsLeaf           bool   `gorm:"not null"`
 	IsMuted          bool   `gorm:"default:false;not null"`
+	HasMutedLeaves   bool   `gorm:"default:false;not null"`
 }
 
 // ActivityLog — модель для таблицы activity_logs.

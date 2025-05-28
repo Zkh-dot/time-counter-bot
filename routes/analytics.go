@@ -34,7 +34,7 @@ func getUserActivityDataForInterval(user db.User, start, end time.Time) Activity
 	var data ActivityData
 
 	// Получаем все активности пользователя.
-	activities, err := db.GetSimpleActivities(user.ID, nil)
+	activities, err := db.GetSimpleActivities(user.ID, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -136,5 +136,10 @@ func FloatPtr(value float64) *float64 {
 
 // IntPtr — вспомогательная функция для создания указателя на int
 func IntPtr(value int) *int {
+	return &value
+}
+
+// BoolPtr — вспомогательная функция для создания указателя на int
+func BoolPtr(value bool) *bool {
 	return &value
 }

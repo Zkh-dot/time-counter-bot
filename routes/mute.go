@@ -26,16 +26,18 @@ func MuteActivityCommand(message *tgbotapi.Message, mute bool) {
 
 	msgText := "Что хочешь размьютить?"
 	callbackCommand := "unmute_activity__unmute"
-	isMuted := true
+	var isMuted *bool = nil
+	hasMutedLeaves := BoolPtr(true)
 	if mute {
 		msgText = "Что хочешь замьютить?"
 		callbackCommand = "mute_activity__mute"
-		isMuted = false
+		isMuted = BoolPtr(false)
+		hasMutedLeaves = nil
 	}
 
 	msgconf := tgbotapi.NewMessage(int64(user.ChatID), msgText)
 	msgconf.ReplyMarkup = buildActivitiesKeyboardMarkupForUser(
-		*user, -1, &isMuted, callbackCommand, getMuteActivitiesLastRow(mute))
+		*user, -1, isMuted, hasMutedLeaves, callbackCommand, getMuteActivitiesLastRow(mute))
 
 	_, err = bot.Bot.Send(msgconf)
 	if err != nil {
@@ -57,11 +59,13 @@ func MuteActivityRefreshCallback(callback *tgbotapi.CallbackQuery, mute bool) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	isMuted := true
+	var isMuted *bool = nil
+	hasMutedLeaves := BoolPtr(true)
 	msgText := "Что хочешь размьютить?"
 	callbackCommand := "unmute_activity__unmute"
 	if mute {
-		isMuted = false
+		isMuted = BoolPtr(false)
+		hasMutedLeaves = nil
 		msgText = "Что хочешь замьютить?"
 		callbackCommand = "mute_activity__mute"
 	}
@@ -71,7 +75,7 @@ func MuteActivityRefreshCallback(callback *tgbotapi.CallbackQuery, mute bool) {
 		callback.Message.MessageID,
 		msgText,
 		buildActivitiesKeyboardMarkupForUser(
-			*user, -1, &isMuted, callbackCommand, getMuteActivitiesLastRow(mute)))
+			*user, -1, isMuted, hasMutedLeaves, callbackCommand, getMuteActivitiesLastRow(mute)))
 	_, err = bot.Bot.Send(msgconf)
 	if err != nil {
 		log.Fatal(err)
@@ -87,14 +91,16 @@ func MuteActivityCallback(callback *tgbotapi.CallbackQuery, mute bool) {
 		log.Fatal(err)
 	}
 
-	isMuted := true
+	var isMuted *bool = nil
+	hasMutedLeaves := BoolPtr(true)
 	finalMsgFirstPart := "Unmuted activity"
 	if mute {
-		isMuted = false
+		isMuted = BoolPtr(false)
+		hasMutedLeaves = nil
 		finalMsgFirstPart = "Muted activity"
 	}
 
-	activities, err := db.GetSimpleActivities(common.UserID(callback.From.ID), &isMuted)
+	activities, err := db.GetSimpleActivities(common.UserID(callback.From.ID), isMuted, hasMutedLeaves)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -139,7 +145,7 @@ func MuteActivityCallback(callback *tgbotapi.CallbackQuery, mute bool) {
 		}
 
 		keyboard := buildActivitiesKeyboardMarkupForUser(
-			*user, nodeID, &isMuted, callbackCommand, getMuteActivitiesLastRow(mute))
+			*user, nodeID, isMuted, hasMutedLeaves, callbackCommand, getMuteActivitiesLastRow(mute))
 
 		_, err = bot.Bot.Send(
 			tgbotapi.NewEditMessageTextAndMarkup(
