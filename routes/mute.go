@@ -26,11 +26,11 @@ func MuteActivityCommand(message *tgbotapi.Message, mute bool) {
 
 	msgText := "Что хочешь размьютить?"
 	callbackCommand := "unmute_activity__unmute"
-	isMuted := false
+	isMuted := true
 	if mute {
 		msgText = "Что хочешь замьютить?"
 		callbackCommand = "mute_activity__mute"
-		isMuted = true
+		isMuted = false
 	}
 
 	msgconf := tgbotapi.NewMessage(int64(user.ChatID), msgText)
