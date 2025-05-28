@@ -9,9 +9,49 @@ import (
 	"TimeCounterBot/common"
 	"TimeCounterBot/db"
 	"TimeCounterBot/routes"
+	"TimeCounterBot/tg/bot"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
+
+func SetCommands() {
+	commands := []tgbotapi.BotCommand{
+		{
+			Command:     "start",
+			Description: "Начать работу с ботом",
+		},
+		{
+			Command:     "register_new_activity",
+			Description: "Зарегистрировать новую активность",
+		},
+		{
+			Command:     "get_day_statistics",
+			Description: "Получить статистику за определённый период времени",
+		},
+		{
+			Command:     "start_notify",
+			Description: "Начать присылать уведомления",
+		},
+		{
+			Command:     "stop_notify",
+			Description: "Закончить присылать уведомления",
+		},
+		{
+			Command:     "mute_activity",
+			Description: "Замьютить активность (чтобы не отображалась в регулярных опросах)",
+		},
+		{
+			Command:     "unmute_activity",
+			Description: "Размьютить активность (чтобы снова появилась в регулярных опросах)",
+		},
+	}
+
+	setCmd := tgbotapi.NewSetMyCommands(commands...)
+	_, err := bot.Bot.Request(setCmd)
+	if err != nil {
+		log.Printf("Ошибка установки команд: %v", err)
+	}
+}
 
 func ReceiveUpdates(ctx context.Context, updates tgbotapi.UpdatesChannel) {
 	for {
@@ -92,6 +132,18 @@ func handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 
 	case "start__disable_notifications":
 		routes.DisableNotificationsCallback(callback)
+
+	case "mute_activity__mute":
+		routes.MuteActivityCallback(callback)
+
+	case "mute_activity__cancel":
+		routes.MuteActivityCancelCallback(callback)
+
+	case "mute_activity__refresh":
+		routes.MuteActivityRefreshCallback(callback)
+
+	case "unmute_activity":
+		routes.UnmuteActivityCallback(callback)
 	}
 }
 
@@ -118,6 +170,12 @@ func handleCommand(message *tgbotapi.Message) {
 
 	case "/test_day_stats_routine":
 		routes.TestDayStatsRoutine(message)
+
+	case "/mute_activity":
+		routes.MuteActivityCommand(message)
+
+	case "/unmute_activity":
+		routes.UnmuteActivityCommand(message)
 
 	}
 }

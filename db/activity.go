@@ -125,3 +125,9 @@ func GetFullActivities(userID common.UserID, isMuted *bool) ([]ActivityRoute, er
 	}
 	return buildActivities(activities), nil
 }
+
+func SetIsMutedActivity(activityID int64, isMuted bool) {
+	GormDB.Model(&Activity{}).
+		Where("id = ?", activityID).
+		Update("is_muted", isMuted)
+}

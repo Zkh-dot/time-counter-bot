@@ -53,6 +53,7 @@ func main() {
 
 	updates := bot.Bot.GetUpdatesChan(updateConfig)
 
+	go router.SetCommands()
 	go router.ReceiveUpdates(ctx, updates)
 	go routes.DispatchNotifications()
 
