@@ -117,7 +117,7 @@ func GetSimpleActivities(userID common.UserID, isMuted *bool, hasMutedLeaves *bo
 	} else if hasMutedLeaves != nil && !*hasMutedLeaves {
 		query += " AND has_muted_leaves = false"
 	}
-	result := GormDB.Where(query, userID).Find(&activities)
+	result := GormDB.Where(query, userID).Order("id ASC").Find(&activities)
 	return activities, result.Error
 }
 
