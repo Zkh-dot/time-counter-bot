@@ -34,7 +34,7 @@ func getUserActivityDataForInterval(user db.User, start, end time.Time) Activity
 	var data ActivityData
 
 	// Получаем все активности пользователя.
-	activities, err := db.GetSimpleActivities(user.ID)
+	activities, err := db.GetSimpleActivities(user.ID, nil)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -21,7 +21,7 @@ func ParseAndAddActivity(userID common.UserID, activityStr string) error {
 	parts := strings.Split(activityStr, " / ")
 	var parentActivityID int64 = -1
 
-	existingActivities, err := GetSimpleActivities(userID)
+	existingActivities, err := GetSimpleActivities(userID, nil)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,8 @@ func buildActivities(activities []Activity) []ActivityRoute {
 
 // GetFullActivityNameByID возвращает полный путь активности по её ID.
 func GetFullActivityNameByID(activityID int64, userID common.UserID) (string, error) {
-	routes, err := GetFullActivities(userID)
+	isMuted := false
+	routes, err := GetFullActivities(userID, &isMuted)
 	if err != nil {
 		return "", err
 	}
@@ -104,15 +105,21 @@ func GetFullActivityNameByID(activityID int64, userID common.UserID) (string, er
 }
 
 // GetSimpleActivities возвращает список активностей пользователя.
-func GetSimpleActivities(userID common.UserID) ([]Activity, error) {
+func GetSimpleActivities(userID common.UserID, isMuted *bool) ([]Activity, error) {
 	var activities []Activity
-	result := GormDB.Where("user_id = ?", userID).Find(&activities)
+	query := "user_id = ?"
+	if isMuted != nil && *isMuted {
+		query += " AND is_muted = true"
+	} else if isMuted != nil && !*isMuted {
+		query += " AND is_muted = false"
+	}
+	result := GormDB.Where(query, userID).Find(&activities)
 	return activities, result.Error
 }
 
 // GetFullActivities возвращает полное дерево активностей в виде ActivityRoute.
-func GetFullActivities(userID common.UserID) ([]ActivityRoute, error) {
-	activities, err := GetSimpleActivities(userID)
+func GetFullActivities(userID common.UserID, isMuted *bool) ([]ActivityRoute, error) {
+	activities, err := GetSimpleActivities(userID, isMuted)
 	if err != nil {
 		return nil, err
 	}

@@ -99,7 +99,10 @@ func SendDayStatsRoutineCallback(callback *tgbotapi.CallbackQuery) {
 		log.Fatal(err)
 	}
 
-	os.Remove(outputFile)
+	err = os.Remove(outputFile)
+	if err != nil {
+		log.Println("Couldn't delete output file: ", err)
+	}
 }
 
 func RefreshDayStatsChartCallback(callback *tgbotapi.CallbackQuery) {
@@ -151,5 +154,8 @@ func RefreshDayStatsChartCallback(callback *tgbotapi.CallbackQuery) {
 		log.Fatal(err)
 	}
 
-	os.Remove(outputFile)
+	err = os.Remove(outputFile)
+	if err != nil {
+		log.Println("Couldn't delete output file: ", err)
+	}
 }

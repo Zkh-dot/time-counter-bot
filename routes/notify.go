@@ -29,7 +29,8 @@ func notifyUser(user db.User) {
 	}
 
 	msgconf := tgbotapi.NewMessage(int64(user.ChatID), "Чё делаеш?))0)")
-	msgconf.ReplyMarkup = buildActivitiesKeyboardMarkupForUser(user, -1)
+	isMuted := false
+	msgconf.ReplyMarkup = buildActivitiesKeyboardMarkupForUser(user, -1, &isMuted)
 
 	_, err = tg.Bot.Send(msgconf)
 	if err != nil {
@@ -47,7 +48,8 @@ func LogUserActivityCallback(callback *tgbotapi.CallbackQuery) {
 		log.Fatal(err)
 	}
 
-	activities, err := db.GetSimpleActivities(common.UserID(callback.From.ID))
+	isMuted := false
+	activities, err := db.GetSimpleActivities(common.UserID(callback.From.ID), &isMuted)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -92,7 +94,8 @@ func LogUserActivityCallback(callback *tgbotapi.CallbackQuery) {
 			log.Fatal(err)
 		}
 
-		keyboard := buildActivitiesKeyboardMarkupForUser(*user, nodeID)
+		isMuted := false
+		keyboard := buildActivitiesKeyboardMarkupForUser(*user, nodeID, &isMuted)
 
 		_, err = tg.Bot.Send(
 			tgbotapi.NewEditMessageTextAndMarkup(
@@ -111,7 +114,8 @@ func RefreshActivitiesCallback(callback *tgbotapi.CallbackQuery) {
 		log.Fatal(err)
 	}
 
-	keyboard := buildActivitiesKeyboardMarkupForUser(*user, -1)
+	isMuted := false
+	keyboard := buildActivitiesKeyboardMarkupForUser(*user, -1, &isMuted)
 
 	_, err = tg.Bot.Send(
 		tgbotapi.NewEditMessageTextAndMarkup(
@@ -132,8 +136,8 @@ func AddNewActivityCallback(callback *tgbotapi.CallbackQuery) {
 	registerNewActivity(*user)
 }
 
-func buildActivitiesKeyboardMarkupForUser(user db.User, parentActivityID int64) tgbotapi.InlineKeyboardMarkup {
-	activities, err := db.GetSimpleActivities(user.ID)
+func buildActivitiesKeyboardMarkupForUser(user db.User, parentActivityID int64, isMuted *bool) tgbotapi.InlineKeyboardMarkup {
+	activities, err := db.GetSimpleActivities(user.ID, isMuted)
 	if err != nil {
 		log.Fatal(err)
 	}
