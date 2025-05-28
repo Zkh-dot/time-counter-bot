@@ -122,7 +122,7 @@ func GetDayStatisticsCommand(message *tgbotapi.Message) {
 	generateActivityChart(data, outputFile)
 
 	// Отправляем картинку в Telegram
-	msgconf := tgbotapi.NewPhoto(int64(message.Chat.ID), tgbotapi.FilePath(outputFile))
+	msgconf := tgbotapi.NewPhoto(message.Chat.ID, tgbotapi.FilePath(outputFile))
 	_, err = tg.Bot.Send(msgconf)
 	if err != nil {
 		log.Fatalf("❌ Ошибка отправки изображения: %v", err)

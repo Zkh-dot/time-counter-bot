@@ -171,7 +171,6 @@ func handleCommand(message *tgbotapi.Message) {
 
 	case "/unmute_activity":
 		routes.MuteActivityCommand(message, false)
-
 	}
 }
 

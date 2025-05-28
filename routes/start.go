@@ -1,13 +1,12 @@
 package routes
 
 import (
-	"database/sql"
-	"fmt"
-	"log"
-
 	"TimeCounterBot/common"
 	"TimeCounterBot/db"
 	"TimeCounterBot/tg/bot"
+	"database/sql"
+	"fmt"
+	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )

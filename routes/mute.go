@@ -43,6 +43,13 @@ func MuteActivityCommand(message *tgbotapi.Message, mute bool) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	_, err = bot.Bot.Request(
+		tgbotapi.NewDeleteMessage(message.Chat.ID, message.MessageID),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func MuteActivityCancelCallback(callback *tgbotapi.CallbackQuery) {

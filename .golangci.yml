@@ -1,0 +1,50 @@
+run:
+  tests: true
+  timeout: 5m
+
+linters:
+  enable:
+    - govet              # Go vet checks
+    - staticcheck        # Static analysis from Dominikh
+#    - revive             # configurable stylistic linter
+    - gofmt              # gofmt formatting
+    - goimports          # imports organization
+    - errcheck           # unchecked errors
+    - ineffassign        # detect ineffectual assignments
+    - unused             # unused code
+    - gosimple           # simplify code
+    - unconvert          # redundant type conversions
+    - typecheck          # type checker
+    - gocyclo            # cyclomatic complexity
+    - dupl               # code duplication
+    - goconst            # repeated constants
+    - prealloc           # suggested preallocation of slices
+    - misspell           # detect commonly misspelled words
+    - nakedret           # naked returns
+    - bodyclose          # http.Body not closed
+    - lll                # line length (default 120 chars)
+#    - depguard           # forbidden imports
+    - gosec              # security checks
+    - whitespace          # trailing whitespace, tabs, etc.
+
+  disable:
+#    - funlen             # (если слишком много длинных функций)
+#    - dupl               # можно настроить threshold вместо отключения
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+
+  dupl:
+    threshold: 100
+
+  lll:
+    line-length: 120
+    tab-width: 1
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-use-default: false
+
+#version: v1
