@@ -13,8 +13,8 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-const Day time.Duration = time.Duration(24) * time.Hour
-const DayStatsWaitDuration time.Duration = 5 * time.Second
+const Day = time.Duration(24) * time.Hour
+const DayStatsWaitDuration = 5 * time.Second
 
 func TestDayStatsRoutine(message *tgbotapi.Message) {
 	user, err := db.GetUserByID(common.UserID(message.From.ID))

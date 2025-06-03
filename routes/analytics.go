@@ -108,14 +108,15 @@ func GetDayStatisticsCommand(message *tgbotapi.Message) {
 	}
 
 	spl := strings.Split(message.Text, " ")
-	start, err := time.Parse(time.RFC3339, spl[1])
+	start, err := time.Parse(time.DateOnly, spl[1])
 	if err != nil {
 		log.Fatal(err)
 	}
-	end, err := time.Parse(time.RFC3339, spl[2])
+	end, err := time.Parse(time.DateOnly, spl[2])
 	if err != nil {
 		log.Fatal(err)
 	}
+	end = end.Add(Day)
 
 	data := getUserActivityDataForInterval(*user, start, end)
 	outputFile := "pie_chart.png"
@@ -127,16 +128,6 @@ func GetDayStatisticsCommand(message *tgbotapi.Message) {
 	if err != nil {
 		log.Fatalf("❌ Ошибка отправки изображения: %v", err)
 	}
-}
-
-// FloatPtr — вспомогательная функция для создания указателя на float64
-func FloatPtr(value float64) *float64 {
-	return &value
-}
-
-// IntPtr — вспомогательная функция для создания указателя на int
-func IntPtr(value int) *int {
-	return &value
 }
 
 // BoolPtr — вспомогательная функция для создания указателя на int
