@@ -83,6 +83,7 @@ func generateActivityChart(data ActivityData, outputFile string) {
 	scriptPath := "python_scripts/generate_sunburst_chart.py"
 
 	// Создаём команду для запуска Python-скрипта
+	// #nosec G204
 	cmd := exec.Command("python3", scriptPath, string(jsonData), outputFile)
 
 	// Перенаправляем stderr, чтобы увидеть ошибки при выполнении

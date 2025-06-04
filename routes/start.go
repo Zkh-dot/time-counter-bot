@@ -141,58 +141,40 @@ func SetScheduleEveningFinishHourCallback(callback *tgbotapi.CallbackQuery) {
 	}
 }
 
-func EnableNotificationsCallback(callback *tgbotapi.CallbackQuery) {
+func EnableNotificationsCallback(callback *tgbotapi.CallbackQuery, enable bool) {
 	user, err := db.GetUserByID(common.UserID(callback.From.ID))
 	if err != nil {
 		log.Fatal(err)
 	}
-	user.TimerEnabled = true
+	user.TimerEnabled = enable
 	err = db.UpdateUser(*user)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	msg := tgbotapi.NewEditMessageTextAndMarkup(
-		int64(user.ChatID),
-		callback.Message.MessageID,
-		fmt.Sprintf(
-			"You will get notifications every %d minutes, from %d:00 UTC to %d:00 UTC.\n"+
-				"Now click the button to start notifications.\nNotifications enabled!",
-			user.TimerMinutes.Int64,
-			user.ScheduleMorningStartHour.Int64,
-			user.ScheduleEveningFinishHour.Int64,
-		),
-		getDisableNotificationsKeyboardMarkup(),
+	message := fmt.Sprintf("You will get notifications every %d minutes, from %d:00 UTC to %d:00 UTC.\n",
+		user.TimerMinutes.Int64,
+		user.ScheduleMorningStartHour.Int64,
+		user.ScheduleEveningFinishHour.Int64,
 	)
-
-	_, err = bot.Bot.Send(msg)
-	if err != nil {
-		log.Fatal(err)
+	if enable {
+		message += "Notifications enabled!"
+	} else {
+		message += "Notifications disabled!"
 	}
-}
 
-func DisableNotificationsCallback(callback *tgbotapi.CallbackQuery) {
-	user, err := db.GetUserByID(common.UserID(callback.From.ID))
-	if err != nil {
-		log.Fatal(err)
-	}
-	user.TimerEnabled = false
-	err = db.UpdateUser(*user)
-	if err != nil {
-		log.Fatal(err)
+	var keyboardMarkup tgbotapi.InlineKeyboardMarkup
+	if enable {
+		keyboardMarkup = getDisableNotificationsKeyboardMarkup()
+	} else {
+		keyboardMarkup = getEnableNotificationsKeyboardMarkup()
 	}
 
 	msg := tgbotapi.NewEditMessageTextAndMarkup(
 		int64(user.ChatID),
 		callback.Message.MessageID,
-		fmt.Sprintf(
-			"You will get notifications every %d minutes, from %d:00 UTC to %d:00 UTC.\n"+
-				"Now click the button to start notifications.\nNotifications disabled!",
-			user.TimerMinutes.Int64,
-			user.ScheduleMorningStartHour.Int64,
-			user.ScheduleEveningFinishHour.Int64,
-		),
-		getEnableNotificationsKeyboardMarkup(),
+		message,
+		keyboardMarkup,
 	)
 
 	_, err = bot.Bot.Send(msg)

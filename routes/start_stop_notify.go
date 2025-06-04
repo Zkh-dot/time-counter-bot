@@ -10,7 +10,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func StartNotifyCommand(message *tgbotapi.Message) {
+func NotifyCommand(message *tgbotapi.Message, start bool) {
 	tgUser := message.From
 	if tgUser == nil {
 		return
@@ -34,38 +34,7 @@ func StartNotifyCommand(message *tgbotapi.Message) {
 		}
 	}
 
-	user.TimerEnabled = true
-	err = db.UpdateUser(*user)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func StopNotifyCommand(message *tgbotapi.Message) {
-	tgUser := message.From
-	if tgUser == nil {
-		return
-	}
-
-	userID := common.UserID(tgUser.ID)
-
-	user, err := db.GetUserByID(userID)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	userState := common.UserStates[userID]
-
-	if userState.State == common.InCommand {
-		_, err = bot.Bot.Send(
-			tgbotapi.NewMessage(message.Chat.ID, "You're already executing some command"),
-		)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	user.TimerEnabled = false
+	user.TimerEnabled = start
 	err = db.UpdateUser(*user)
 	if err != nil {
 		log.Fatal(err)

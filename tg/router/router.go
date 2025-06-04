@@ -100,45 +100,37 @@ func handleMessage(message *tgbotapi.Message) {
 	}
 }
 
+type CallbackHandler func(*tgbotapi.CallbackQuery)
+
+var callbackHandlers = map[string]CallbackHandler{
+	"activity_log":          routes.LogUserActivityCallback,
+	"register_new_activity": routes.AddNewActivityCallback,
+	"refresh_activities":    routes.RefreshActivitiesCallback,
+
+	"day_stats__send_chart":    routes.SendDayStatsRoutineCallback,
+	"day_stats__refresh_chart": routes.RefreshDayStatsChartCallback,
+
+	"start__set_timer_minutes":            routes.SetTimerMinutesCallback,
+	"start__schedule_morning_start_hour":  routes.SetScheduleMorningStartHourCallback,
+	"start__schedule_evening_finish_hour": routes.SetScheduleEveningFinishHourCallback,
+	"start__enable_notifications":         func(c *tgbotapi.CallbackQuery) { routes.EnableNotificationsCallback(c, true) },
+	"start__disable_notifications":        func(c *tgbotapi.CallbackQuery) { routes.EnableNotificationsCallback(c, false) },
+
+	"mute_activity__mute":    func(c *tgbotapi.CallbackQuery) { routes.MuteActivityCallback(c, true) },
+	"mute_activity__cancel":  routes.MuteActivityCancelCallback,
+	"mute_activity__refresh": func(c *tgbotapi.CallbackQuery) { routes.MuteActivityRefreshCallback(c, true) },
+
+	"unmute_activity__unmute":  func(c *tgbotapi.CallbackQuery) { routes.MuteActivityCallback(c, false) },
+	"unmute_activity__cancel":  routes.MuteActivityCancelCallback,
+	"unmute_activity__refresh": func(c *tgbotapi.CallbackQuery) { routes.MuteActivityRefreshCallback(c, false) },
+}
+
 func handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
 	dataPath := strings.Split(callback.Data, " ")[0]
-	switch dataPath {
-	case "activity_log":
-		routes.LogUserActivityCallback(callback)
-	case "register_new_activity":
-		routes.AddNewActivityCallback(callback)
-	case "refresh_activities":
-		routes.RefreshActivitiesCallback(callback)
-
-	case "day_stats__send_chart":
-		routes.SendDayStatsRoutineCallback(callback)
-	case "day_stats__refresh_chart":
-		routes.RefreshDayStatsChartCallback(callback)
-
-	case "start__set_timer_minutes":
-		routes.SetTimerMinutesCallback(callback)
-	case "start__schedule_morning_start_hour":
-		routes.SetScheduleMorningStartHourCallback(callback)
-	case "start__schedule_evening_finish_hour":
-		routes.SetScheduleEveningFinishHourCallback(callback)
-	case "start__enable_notifications":
-		routes.EnableNotificationsCallback(callback)
-	case "start__disable_notifications":
-		routes.DisableNotificationsCallback(callback)
-
-	case "mute_activity__mute":
-		routes.MuteActivityCallback(callback, true)
-	case "mute_activity__cancel":
-		routes.MuteActivityCancelCallback(callback)
-	case "mute_activity__refresh":
-		routes.MuteActivityRefreshCallback(callback, true)
-
-	case "unmute_activity__unmute":
-		routes.MuteActivityCallback(callback, false)
-	case "unmute_activity__cancel":
-		routes.MuteActivityCancelCallback(callback)
-	case "unmute_activity__refresh":
-		routes.MuteActivityRefreshCallback(callback, false)
+	if handler, ok := callbackHandlers[dataPath]; ok {
+		handler(callback)
+	} else {
+		log.Printf("Unknown callback: %q", dataPath)
 	}
 }
 
@@ -149,10 +141,10 @@ func handleCommand(message *tgbotapi.Message) {
 		routes.StartCommand(message)
 
 	case "/start_notify":
-		routes.StartNotifyCommand(message)
+		routes.NotifyCommand(message, true)
 
 	case "/stop_notify":
-		routes.StopNotifyCommand(message)
+		routes.NotifyCommand(message, false)
 
 	case "/test_notify":
 		routes.TestNotifyCommand(message)
