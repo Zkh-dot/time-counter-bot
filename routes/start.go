@@ -198,42 +198,39 @@ func getStartCommandTimerIntervalsKeyboardMarkup() tgbotapi.InlineKeyboardMarkup
 	)
 }
 
+func createTimeKeyboardButtons(startHour, endHour int, callbackPrefix string) [][]tgbotapi.InlineKeyboardButton {
+	var rows [][]tgbotapi.InlineKeyboardButton
+	var currentRow []tgbotapi.InlineKeyboardButton
+
+	for hour := startHour; hour <= endHour; hour++ {
+		button := tgbotapi.InlineKeyboardButton{
+			Text:         fmt.Sprintf("%02d:00", hour),
+			CallbackData: StringPtr(fmt.Sprintf("%s %d", callbackPrefix, hour)),
+		}
+		currentRow = append(currentRow, button)
+
+		if len(currentRow) == 4 {
+			rows = append(rows, currentRow)
+			currentRow = nil
+		}
+	}
+
+	if len(currentRow) > 0 {
+		rows = append(rows, currentRow)
+	}
+
+	return rows
+}
+
 func getScheduleMorningStartHourKeyboardMarkup() tgbotapi.InlineKeyboardMarkup {
 	return tgbotapi.NewInlineKeyboardMarkup(
-		append(
-			make([]tgbotapi.InlineKeyboardButton, 0),
-			tgbotapi.InlineKeyboardButton{Text: "03:00", CallbackData: StringPtr("start__schedule_morning_start_hour 3")},
-			tgbotapi.InlineKeyboardButton{Text: "04:00", CallbackData: StringPtr("start__schedule_morning_start_hour 4")},
-			tgbotapi.InlineKeyboardButton{Text: "05:00", CallbackData: StringPtr("start__schedule_morning_start_hour 5")},
-			tgbotapi.InlineKeyboardButton{Text: "06:00", CallbackData: StringPtr("start__schedule_morning_start_hour 6")},
-		),
-		append(
-			make([]tgbotapi.InlineKeyboardButton, 0),
-			tgbotapi.InlineKeyboardButton{Text: "07:00", CallbackData: StringPtr("start__schedule_morning_start_hour 7")},
-			tgbotapi.InlineKeyboardButton{Text: "08:00", CallbackData: StringPtr("start__schedule_morning_start_hour 8")},
-			tgbotapi.InlineKeyboardButton{Text: "09:00", CallbackData: StringPtr("start__schedule_morning_start_hour 9")},
-			tgbotapi.InlineKeyboardButton{Text: "10:00", CallbackData: StringPtr("start__schedule_morning_start_hour 10")},
-		),
-	)
+		createTimeKeyboardButtons(3, 10, "start__schedule_morning_start_hour")...)
 }
 
 func getScheduleEveningFinishHourKeyboardMarkup() tgbotapi.InlineKeyboardMarkup {
-	return tgbotapi.NewInlineKeyboardMarkup(
-		append(
-			make([]tgbotapi.InlineKeyboardButton, 0),
-			tgbotapi.InlineKeyboardButton{Text: "18:00", CallbackData: StringPtr("start__schedule_evening_finish_hour 18")},
-			tgbotapi.InlineKeyboardButton{Text: "19:00", CallbackData: StringPtr("start__schedule_evening_finish_hour 19")},
-			tgbotapi.InlineKeyboardButton{Text: "20:00", CallbackData: StringPtr("start__schedule_evening_finish_hour 20")},
-			tgbotapi.InlineKeyboardButton{Text: "21:00", CallbackData: StringPtr("start__schedule_evening_finish_hour 21")},
-		),
-		append(
-			make([]tgbotapi.InlineKeyboardButton, 0),
-			tgbotapi.InlineKeyboardButton{Text: "22:00", CallbackData: StringPtr("start__schedule_evening_finish_hour 22")},
-			tgbotapi.InlineKeyboardButton{Text: "23:00", CallbackData: StringPtr("start__schedule_evening_finish_hour 23")},
-			tgbotapi.InlineKeyboardButton{Text: "00:00", CallbackData: StringPtr("start__schedule_evening_finish_hour 0")},
-			tgbotapi.InlineKeyboardButton{Text: "01:00", CallbackData: StringPtr("start__schedule_evening_finish_hour 1")},
-		),
-	)
+	rows := createTimeKeyboardButtons(18, 23, "start__schedule_evening_finish_hour")
+	rows = append(rows, createTimeKeyboardButtons(0, 1, "start__schedule_evening_finish_hour")...)
+	return tgbotapi.NewInlineKeyboardMarkup(rows...)
 }
 
 func getEnableNotificationsKeyboardMarkup() tgbotapi.InlineKeyboardMarkup {

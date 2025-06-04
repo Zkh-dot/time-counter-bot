@@ -113,8 +113,12 @@ var callbackHandlers = map[string]CallbackHandler{
 	"start__set_timer_minutes":            routes.SetTimerMinutesCallback,
 	"start__schedule_morning_start_hour":  routes.SetScheduleMorningStartHourCallback,
 	"start__schedule_evening_finish_hour": routes.SetScheduleEveningFinishHourCallback,
-	"start__enable_notifications":         func(c *tgbotapi.CallbackQuery) { routes.EnableNotificationsCallback(c, true) },
-	"start__disable_notifications":        func(c *tgbotapi.CallbackQuery) { routes.EnableNotificationsCallback(c, false) },
+	"start__enable_notifications": func(c *tgbotapi.CallbackQuery) {
+		routes.EnableNotificationsCallback(c, true)
+	},
+	"start__disable_notifications": func(c *tgbotapi.CallbackQuery) {
+		routes.EnableNotificationsCallback(c, false)
+	},
 
 	"mute_activity__mute":    func(c *tgbotapi.CallbackQuery) { routes.MuteActivityCallback(c, true) },
 	"mute_activity__cancel":  routes.MuteActivityCancelCallback,
