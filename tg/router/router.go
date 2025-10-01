@@ -44,6 +44,18 @@ func SetCommands() {
 			Command:     "get_day_statistics",
 			Description: "Получить статистику за определённый период времени",
 		},
+		{
+			Command:     "export_activities",
+			Description: "Экспортировать дерево активностей в YAML файл",
+		},
+		{
+			Command:     "import_activities",
+			Description: "Импортировать активности из YAML файла",
+		},
+		{
+			Command:     "delete_activity",
+			Description: "Удалить активность и все её подактивности",
+		},
 	}
 
 	setCmd := tgbotapi.NewSetMyCommands(commands...)
@@ -92,6 +104,9 @@ func handleMessage(message *tgbotapi.Message) {
 
 	if strings.HasPrefix(message.Text, "/") {
 		handleCommand(message)
+	} else if message.Document != nil {
+		// Обрабатываем загруженный документ (возможно, для импорта активностей)
+		routes.ProcessImportFile(message)
 	} else if len(message.Text) > 0 {
 		// chech user state and send info to waiting channel
 		if common.UserStates[userID].WaitingChannel != nil {
@@ -127,6 +142,10 @@ var callbackHandlers = map[string]CallbackHandler{
 	"unmute_activity__unmute":  func(c *tgbotapi.CallbackQuery) { routes.MuteActivityCallback(c, false) },
 	"unmute_activity__cancel":  routes.MuteActivityCancelCallback,
 	"unmute_activity__refresh": func(c *tgbotapi.CallbackQuery) { routes.MuteActivityRefreshCallback(c, false) },
+
+	"delete_activity__delete":  routes.DeleteActivityCallback,
+	"delete_activity__cancel":  routes.DeleteActivityCancelCallback,
+	"delete_activity__refresh": routes.DeleteActivityRefreshCallback,
 }
 
 func handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
@@ -167,6 +186,15 @@ func handleCommand(message *tgbotapi.Message) {
 
 	case "/unmute_activity":
 		routes.MuteActivityCommand(message, false)
+
+	case "/export_activities":
+		routes.ExportActivitiesCommand(message)
+
+	case "/import_activities":
+		routes.ImportActivitiesCommand(message)
+
+	case "/delete_activity":
+		routes.DeleteActivityCommand(message)
 	}
 }
 

@@ -44,3 +44,18 @@ type ActivityRoute struct {
 	Name   string
 	LeafID int64
 }
+
+// ActivityNode — структура для представления активности в YAML формате.
+type ActivityNode struct {
+	Name     string         `yaml:"name"`
+	IsMuted  bool           `yaml:"is_muted,omitempty"`
+	Children []ActivityNode `yaml:"children,omitempty"`
+}
+
+// ActivityExport — корневая структура для экспорта активностей в YAML.
+type ActivityExport struct {
+	Version    string         `yaml:"version"`
+	UserID     int64          `yaml:"user_id"`
+	ExportDate string         `yaml:"export_date"`
+	Activities []ActivityNode `yaml:"activities"`
+}

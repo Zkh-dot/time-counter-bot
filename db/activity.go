@@ -4,9 +4,12 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"TimeCounterBot/common"
 	"slices"
+
+	"gopkg.in/yaml.v3"
 )
 
 // addActivity добавляет новую активность и возвращает её ID.
@@ -247,4 +250,174 @@ func recursivelyUnmuteParents(childID int64) error {
 	}
 
 	return recursivelyUnmuteParents(parentID)
+}
+
+// buildActivityTree рекурсивно строит дерево активностей для экспорта.
+func buildActivityTree(activities []Activity, parentID int64) []ActivityNode {
+	var children []ActivityNode
+
+	for _, activity := range activities {
+		if activity.ParentActivityID == parentID {
+			node := ActivityNode{
+				Name:     activity.Name,
+				IsMuted:  activity.IsMuted,
+				Children: buildActivityTree(activities, activity.ID),
+			}
+			children = append(children, node)
+		}
+	}
+
+	return children
+}
+
+// ExportActivitiesToYAML экспортирует все активности пользователя в YAML формат.
+func ExportActivitiesToYAML(userID common.UserID) ([]byte, error) {
+	activities, err := GetSimpleActivities(userID, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	export := ActivityExport{
+		Version:    "1.0",
+		UserID:     int64(userID),
+		ExportDate: time.Now().Format("2006-01-02T15:04:05Z07:00"),
+		Activities: buildActivityTree(activities, -1),
+	}
+
+	return yaml.Marshal(export)
+}
+
+// parseActivityNode рекурсивно парсит узел активности и добавляет его в базу.
+func parseActivityNode(node ActivityNode, userID common.UserID, parentID int64) error {
+	// Проверяем, существует ли уже такая активность
+	activities, err := GetSimpleActivities(userID, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	// Определяем, является ли узел листом (нет дочерних элементов)
+	isLeaf := len(node.Children) == 0
+
+	// Ищем существующую активность
+	idx := slices.IndexFunc(activities, func(a Activity) bool {
+		return a.Name == node.Name && a.ParentActivityID == parentID && a.IsLeaf == isLeaf
+	})
+
+	var activityID int64
+	if idx == -1 {
+		// Создаем новую активность
+		newActivity := Activity{
+			UserID:           int64(userID),
+			Name:             node.Name,
+			ParentActivityID: parentID,
+			IsLeaf:           isLeaf,
+			IsMuted:          node.IsMuted,
+		}
+		activityID, err = addActivity(newActivity)
+		if err != nil {
+			return err
+		}
+	} else {
+		// Обновляем существующую активность
+		activityID = activities[idx].ID
+		err = GormDB.Model(&Activity{}).
+			Where("id = ?", activityID).
+			Update("is_muted", node.IsMuted).Error
+		if err != nil {
+			return err
+		}
+	}
+
+	// Обрабатываем дочерние узлы
+	for _, child := range node.Children {
+		if err := parseActivityNode(child, userID, activityID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ImportActivitiesFromYAML импортирует активности из YAML данных.
+func ImportActivitiesFromYAML(data []byte, userID common.UserID) error {
+	var export ActivityExport
+	if err := yaml.Unmarshal(data, &export); err != nil {
+		return err
+	}
+
+	// Проверяем версию формата
+	if export.Version != "1.0" {
+		return errors.New("unsupported export format version: " + export.Version)
+	}
+
+	// Импортируем каждый корневой узел
+	for _, activity := range export.Activities {
+		if err := parseActivityNode(activity, userID, -1); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// DeleteActivityRecursive удаляет активность и все её дочерние активности.
+func DeleteActivityRecursive(activityID int64, userID common.UserID) error {
+	// Сначала получаем все активности пользователя
+	activities, err := GetSimpleActivities(userID, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	// Находим активность для удаления
+	var targetActivity *Activity
+	for _, activity := range activities {
+		if activity.ID == activityID {
+			targetActivity = &activity
+			break
+		}
+	}
+
+	if targetActivity == nil {
+		return errors.New("activity not found")
+	}
+
+	// Рекурсивно удаляем все дочерние активности
+	if err := deleteChildrenRecursive(activityID, activities); err != nil {
+		return err
+	}
+
+	// Удаляем саму активность
+	if err := GormDB.Delete(&Activity{}, activityID).Error; err != nil {
+		return err
+	}
+
+	// Удаляем все связанные логи активности
+	if err := GormDB.Where("activity_id = ?", activityID).Delete(&ActivityLog{}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// deleteChildrenRecursive рекурсивно удаляет все дочерние активности.
+func deleteChildrenRecursive(parentID int64, activities []Activity) error {
+	for _, activity := range activities {
+		if activity.ParentActivityID == parentID {
+			// Рекурсивно удаляем детей этой активности
+			if err := deleteChildrenRecursive(activity.ID, activities); err != nil {
+				return err
+			}
+
+			// Удаляем активность
+			if err := GormDB.Delete(&Activity{}, activity.ID).Error; err != nil {
+				return err
+			}
+
+			// Удаляем логи активности
+			if err := GormDB.Where("activity_id = ?", activity.ID).Delete(&ActivityLog{}).Error; err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
