@@ -19,7 +19,7 @@ services:
     container_name: telegram-bot-pg
     restart: always
     environment:
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_TOKEN}
+      # - TELEGRAM_BOT_TOKEN=your-bot-token
       - DATABASE_URL=postgres://bot:secret@postgres:5432/botdb?sslmode=disable
     depends_on:
       - postgres
