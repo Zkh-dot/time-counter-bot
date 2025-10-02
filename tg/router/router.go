@@ -155,6 +155,11 @@ var callbackHandlers = map[string]CallbackHandler{
 	"compare_periods__this_vs_last_month": routes.ComparePeriods_ThisVsLastMonthCallback,
 	"compare_periods__custom":             routes.ComparePeriods_CustomCallback,
 	"compare_periods__back":               routes.ComparePeriods_BackCallback,
+
+	"day_stats__today":     func(c *tgbotapi.CallbackQuery) { routes.DayStatsCallback(c, "today") },
+	"day_stats__yesterday": func(c *tgbotapi.CallbackQuery) { routes.DayStatsCallback(c, "yesterday") },
+	"day_stats__this_week": func(c *tgbotapi.CallbackQuery) { routes.DayStatsCallback(c, "this_week") },
+	"day_stats__last_week": func(c *tgbotapi.CallbackQuery) { routes.DayStatsCallback(c, "last_week") },
 }
 
 func handleCallbackQuery(callback *tgbotapi.CallbackQuery) {

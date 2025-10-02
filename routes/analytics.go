@@ -84,8 +84,8 @@ func generateActivityChart(data ActivityData, outputFile string) {
 
 	// Создаём команду для запуска Python-скрипта с виртуальной средой
 	// #nosec G204
-	pythonPath := "/home/sergei-scv/arcadia/.venv/bin/python"
-	cmd := exec.Command(pythonPath, scriptPath, string(jsonData), outputFile)
+
+	cmd := exec.Command("python3", scriptPath, string(jsonData), outputFile)
 
 	// Перенаправляем stderr, чтобы увидеть ошибки при выполнении
 	cmd.Stderr = os.Stderr

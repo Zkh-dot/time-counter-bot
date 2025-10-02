@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"os"
 	"sort"
 	"time"
 
@@ -58,17 +59,38 @@ func AnalyticsMenuCommand(message *tgbotapi.Message) {
 	}
 }
 
-// AnalyticsGetDayStatsCallback перенаправляет на существующую функцию статистики.
+// AnalyticsGetDayStatsCallback показывает меню выбора периода для статистики.
 func AnalyticsGetDayStatsCallback(callback *tgbotapi.CallbackQuery) {
-	// Создаем фиктивное сообщение для передачи в GetDayStatisticsCommand
-	message := &tgbotapi.Message{
-		From: callback.From,
-		Chat: callback.Message.Chat,
-	}
+	msgText := "📈 *Статистика активностей*\n\nВыберите период для анализа:"
 
-	GetDayStatisticsCommand(message)
+	keyboard := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("📅 Сегодня", "day_stats__today"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("📅 Вчера", "day_stats__yesterday"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("📅 Эта неделя", "day_stats__this_week"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("📅 Прошлая неделя", "day_stats__last_week"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("⬅️ Назад", "analytics__back"),
+		),
+	)
 
-	answerConfig := tgbotapi.NewCallback(callback.ID, "Открываем статистику...")
+	editConfig := tgbotapi.NewEditMessageTextAndMarkup(
+		callback.Message.Chat.ID,
+		callback.Message.MessageID,
+		msgText,
+		keyboard,
+	)
+	editConfig.ParseMode = "Markdown"
+	bot.Bot.Send(editConfig)
+
+	answerConfig := tgbotapi.NewCallback(callback.ID, "Выберите период для статистики")
 	bot.Bot.Request(answerConfig)
 }
 
@@ -385,4 +407,96 @@ func formatMinutes(minutes int64) string {
 	} else {
 		return fmt.Sprintf("%d ч %d мин", hours, mins)
 	}
+}
+
+// DayStatsCallback обрабатывает выбор периода для статистики и генерирует график.
+func DayStatsCallback(callback *tgbotapi.CallbackQuery, periodType string) {
+	userID := common.UserID(callback.From.ID)
+
+	user, err := db.GetUserByID(userID)
+	if err != nil {
+		log.Printf("Ошибка получения пользователя: %v", err)
+		answerConfig := tgbotapi.NewCallback(callback.ID, "Ошибка получения данных")
+		bot.Bot.Request(answerConfig)
+		return
+	}
+
+	now := time.Now()
+	var start, end time.Time
+	var periodName string
+
+	switch periodType {
+	case "today":
+		start = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		end = start.AddDate(0, 0, 1)
+		periodName = "сегодня"
+	case "yesterday":
+		start = time.Date(now.Year(), now.Month(), now.Day()-1, 0, 0, 0, 0, now.Location())
+		end = start.AddDate(0, 0, 1)
+		periodName = "вчера"
+	case "this_week":
+		weekday := int(now.Weekday())
+		if weekday == 0 { // Воскресенье
+			weekday = 7
+		}
+		start = now.AddDate(0, 0, -(weekday - 1)).Truncate(24 * time.Hour)
+		end = start.AddDate(0, 0, 7)
+		periodName = "на этой неделе"
+	case "last_week":
+		weekday := int(now.Weekday())
+		if weekday == 0 { // Воскресенье
+			weekday = 7
+		}
+		thisWeekStart := now.AddDate(0, 0, -(weekday - 1)).Truncate(24 * time.Hour)
+		start = thisWeekStart.AddDate(0, 0, -7)
+		end = start.AddDate(0, 0, 7)
+		periodName = "на прошлой неделе"
+	default:
+		answerConfig := tgbotapi.NewCallback(callback.ID, "Неизвестный период")
+		bot.Bot.Request(answerConfig)
+		return
+	}
+
+	data := getUserActivityDataForInterval(*user, start, end)
+	outputFile := fmt.Sprintf("analytics_chart_%d_%d.png", user.ID, callback.Message.MessageID)
+
+	// Используем существующую функцию генерации графика
+	generateActivityChart(data, outputFile)
+
+	// Отправляем картинку в Telegram
+	msgconf := tgbotapi.NewPhoto(int64(user.ChatID), tgbotapi.FilePath(outputFile))
+	msgconf.Caption = fmt.Sprintf("📊 Диаграмма активности %s\n(%s - %s)",
+		periodName,
+		start.Format("02.01.2006"),
+		end.AddDate(0, 0, -1).Format("02.01.2006"))
+
+	keyboard := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("⬅️ Назад к выбору периода", "analytics__day_stats"),
+		),
+	)
+	msgconf.ReplyMarkup = keyboard
+
+	_, err = bot.Bot.Send(msgconf)
+	if err != nil {
+		log.Printf("❌ Ошибка отправки изображения: %v", err)
+		answerConfig := tgbotapi.NewCallback(callback.ID, "Ошибка создания графика")
+		bot.Bot.Request(answerConfig)
+		return
+	}
+
+	// Удаляем предыдущее сообщение
+	_, err = bot.Bot.Send(tgbotapi.NewDeleteMessage(callback.Message.Chat.ID, callback.Message.MessageID))
+	if err != nil {
+		log.Printf("Ошибка удаления сообщения: %v", err)
+	}
+
+	// Удаляем временный файл
+	err = os.Remove(outputFile)
+	if err != nil {
+		log.Printf("Не удалось удалить временный файл: %v", err)
+	}
+
+	answerConfig := tgbotapi.NewCallback(callback.ID, "График создан")
+	bot.Bot.Request(answerConfig)
 }
