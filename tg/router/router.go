@@ -41,8 +41,8 @@ func SetCommands() {
 			Description: "Размьютить активность (чтобы снова появилась в регулярных опросах)",
 		},
 		{
-			Command:     "get_day_statistics",
-			Description: "Получить статистику за определённый период времени",
+			Command:     "analytics",
+			Description: "Аналитика и статистика активностей",
 		},
 		{
 			Command:     "export_activities",
@@ -146,6 +146,15 @@ var callbackHandlers = map[string]CallbackHandler{
 	"delete_activity__delete":  routes.DeleteActivityCallback,
 	"delete_activity__cancel":  routes.DeleteActivityCancelCallback,
 	"delete_activity__refresh": routes.DeleteActivityRefreshCallback,
+
+	"analytics__day_stats":       routes.AnalyticsGetDayStatsCallback,
+	"analytics__compare_periods": routes.AnalyticsComperiodsCallback,
+	"analytics__back":            routes.AnalyticsBackCallback,
+
+	"compare_periods__this_vs_last_week":  routes.ComparePeriods_ThisVsLastWeekCallback,
+	"compare_periods__this_vs_last_month": routes.ComparePeriods_ThisVsLastMonthCallback,
+	"compare_periods__custom":             routes.ComparePeriods_CustomCallback,
+	"compare_periods__back":               routes.ComparePeriods_BackCallback,
 }
 
 func handleCallbackQuery(callback *tgbotapi.CallbackQuery) {
@@ -174,6 +183,9 @@ func handleCommand(message *tgbotapi.Message) {
 
 	case "/register_new_activity":
 		routes.RegisterNewActivityCommand(message)
+
+	case "/analytics":
+		routes.AnalyticsMenuCommand(message)
 
 	case "/get_day_statistics":
 		routes.GetDayStatisticsCommand(message)

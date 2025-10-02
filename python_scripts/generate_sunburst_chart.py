@@ -19,6 +19,24 @@ import seaborn as sns
 from collections import defaultdict
 
 
+def format_duration(minutes):
+    """
+    Форматирует время из минут в удобочитаемый формат.
+    """
+    if minutes == 0:
+        return "0 мин"
+    
+    hours = int(minutes // 60)
+    mins = int(minutes % 60)
+    
+    if hours == 0:
+        return f"{mins} мин"
+    elif mins == 0:
+        return f"{hours} ч"
+    else:
+        return f"{hours} ч {mins} мин"
+
+
 def generate_sunburst_chart(data, output_file):
     # Построение словаря узлов и отображения: родитель -> список детей.
     nodes = {node["id"]: node for node in data["nodes"]}
@@ -116,8 +134,9 @@ def generate_sunburst_chart(data, output_file):
 
         node_dur = computed_duration[node_id]
         node_pct = node_dur / total_duration * 100
+        formatted_duration = format_duration(node_dur)
         display_text = (f"{nodes[node_id]['name']}\n"
-                        f"{node_dur} ({node_pct:.1f}%)")
+                        f"{formatted_duration} ({node_pct:.1f}%)")
 
         mid_angle = start_angle + angle_width / 2
         r_text = (inner_radius + outer_radius) / 2
@@ -170,7 +189,8 @@ def generate_sunburst_chart(data, output_file):
     for node_id, d in leaf_nodes:
         p = d / total_duration * 100
         full_name = get_full_name(node_id)
-        label = f"{full_name} - {d} ({p:.1f}%)"
+        formatted_duration = format_duration(d)
+        label = f"{full_name} - {formatted_duration} ({p:.1f}%)"
         patch = mpatches.Patch(color=color_dict[node_id], label=label)
         legend_handles.append(patch)
     ax.legend(handles=legend_handles, loc="center left",

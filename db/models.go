@@ -59,3 +59,21 @@ type ActivityExport struct {
 	ExportDate string         `yaml:"export_date"`
 	Activities []ActivityNode `yaml:"activities"`
 }
+
+// ActivityComparison — структура для сравнения активностей между периодами.
+type ActivityComparison struct {
+	ActivityName   string
+	Period1Minutes int64
+	Period2Minutes int64
+	DifferenceMin  int64   // Разница в минутах
+	PercentChange  float64 // Процентное изменение
+}
+
+// PeriodComparisonResult — результат сравнения двух периодов.
+type PeriodComparisonResult struct {
+	Period1Name  string
+	Period2Name  string
+	Period1Total int64
+	Period2Total int64
+	Comparisons  []ActivityComparison
+}

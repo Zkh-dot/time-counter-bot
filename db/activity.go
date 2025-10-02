@@ -421,3 +421,125 @@ func deleteChildrenRecursive(parentID int64, activities []Activity) error {
 	}
 	return nil
 }
+
+// CompareActivityPeriods сравнивает активности пользователя между двумя периодами времени.
+func CompareActivityPeriods(userID common.UserID, period1Start, period1End, period2Start, period2End time.Time, period1Name, period2Name string) (*PeriodComparisonResult, error) {
+	// Получаем активности для первого периода
+	period1Stats, err := getActivityStatsForPeriod(userID, period1Start, period1End)
+	if err != nil {
+		return nil, err
+	}
+
+	// Получаем активности для второго периода
+	period2Stats, err := getActivityStatsForPeriod(userID, period2Start, period2End)
+	if err != nil {
+		return nil, err
+	}
+
+	// Создаем карту для быстрого поиска
+	period2Map := make(map[string]int64)
+	var period2Total int64
+	for _, stat := range period2Stats {
+		period2Map[stat.ActivityName] = stat.TotalMinutes
+		period2Total += stat.TotalMinutes
+	}
+
+	var period1Total int64
+	var comparisons []ActivityComparison
+
+	// Сравниваем активности
+	for _, p1Stat := range period1Stats {
+		period1Total += p1Stat.TotalMinutes
+		p2Minutes := period2Map[p1Stat.ActivityName]
+
+		difference := p1Stat.TotalMinutes - p2Minutes
+		var percentChange float64
+		if p2Minutes > 0 {
+			percentChange = (float64(difference) / float64(p2Minutes)) * 100
+		} else if p1Stat.TotalMinutes > 0 {
+			percentChange = 100 // Новая активность
+		}
+
+		comparisons = append(comparisons, ActivityComparison{
+			ActivityName:   p1Stat.ActivityName,
+			Period1Minutes: p1Stat.TotalMinutes,
+			Period2Minutes: p2Minutes,
+			DifferenceMin:  difference,
+			PercentChange:  percentChange,
+		})
+
+		// Удаляем из карты, чтобы потом обработать оставшиеся
+		delete(period2Map, p1Stat.ActivityName)
+	}
+
+	// Добавляем активности, которые есть только во втором периоде
+	for activityName, p2Minutes := range period2Map {
+		comparisons = append(comparisons, ActivityComparison{
+			ActivityName:   activityName,
+			Period1Minutes: 0,
+			Period2Minutes: p2Minutes,
+			DifferenceMin:  -p2Minutes,
+			PercentChange:  -100, // Активность исчезла
+		})
+	}
+
+	return &PeriodComparisonResult{
+		Period1Name:  period1Name,
+		Period2Name:  period2Name,
+		Period1Total: period1Total,
+		Period2Total: period2Total,
+		Comparisons:  comparisons,
+	}, nil
+}
+
+// ActivityStat — статистика по активности за период.
+type ActivityStat struct {
+	ActivityName string
+	TotalMinutes int64
+}
+
+// getActivityStatsForPeriod получает статистику по активностям за определенный период.
+func getActivityStatsForPeriod(userID common.UserID, startTime, endTime time.Time) ([]ActivityStat, error) {
+	var results []ActivityStat
+
+	query := `
+		SELECT 
+			a.id as activity_id,
+			SUM(al.interval_minutes) as total_minutes
+		FROM activity_logs al
+		JOIN activities a ON al.activity_id = a.id
+		WHERE al.user_id = ? 
+		AND al.timestamp >= ? 
+		AND al.timestamp <= ?
+		GROUP BY a.id
+		ORDER BY total_minutes DESC
+	`
+
+	rows, err := GormDB.Raw(query, userID, startTime, endTime).Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var activityID int64
+		var totalMinutes int64
+
+		if err := rows.Scan(&activityID, &totalMinutes); err != nil {
+			return nil, err
+		}
+
+		// Получаем полное название активности
+		activityName, err := GetFullActivityNameByID(activityID, userID)
+		if err != nil {
+			continue // Пропускаем если не можем получить название
+		}
+
+		results = append(results, ActivityStat{
+			ActivityName: activityName,
+			TotalMinutes: totalMinutes,
+		})
+	}
+
+	return results, nil
+}
